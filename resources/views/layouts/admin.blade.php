@@ -18,12 +18,14 @@
             ['label' => 'Duyệt khoá học', 'route' => 'admin.courses.index', 'active' => 'admin.courses.*', 'icon' => 'book'],
             ['label' => 'Danh mục', 'route' => 'admin.categories.index', 'active' => 'admin.categories.*', 'icon' => 'tag'],
             ['label' => 'Ghi danh', 'route' => 'admin.enrollments.index', 'active' => 'admin.enrollments.*', 'icon' => 'clipboard'],
+            ['label' => 'Đơn hàng', 'route' => 'admin.orders.index', 'active' => 'admin.orders.*', 'icon' => 'document'],
             ['label' => 'Đánh giá', 'route' => 'admin.reviews.index', 'active' => 'admin.reviews.*', 'icon' => 'chat'],
             ['label' => 'Hỏi đáp', 'route' => 'admin.discussions.index', 'active' => 'admin.discussions.*', 'icon' => 'question'],
         ],
         'Hệ thống' => [
             ['label' => 'Người dùng', 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'icon' => 'users'],
             ['label' => 'Thông báo', 'route' => 'admin.announcements.index', 'active' => 'admin.announcements.*', 'icon' => 'bell'],
+            ['label' => 'Banner trang chủ', 'route' => 'admin.banners.index', 'active' => 'admin.banners.*', 'icon' => 'squares'],
             ['label' => 'Ảnh đã lưu', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'icon' => 'photo'],
         ],
     ];
@@ -85,6 +87,8 @@
                         <h1 class="truncate text-lg font-semibold text-gray-900">{{ $title }}</h1>
                     </div>
 
+                    <div class="flex items-center gap-2">
+                    <x-notification-bell variant="light" />
                     <x-dropdown align="right" width="w-56">
                         <x-slot name="trigger">
                             <button class="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm hover:bg-gray-100">
@@ -105,6 +109,7 @@
                             </form>
                         </x-slot>
                     </x-dropdown>
+                    </div>
                 </header>
 
                 <main class="flex-1 p-4 sm:p-6">

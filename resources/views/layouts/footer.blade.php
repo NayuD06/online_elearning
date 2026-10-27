@@ -15,6 +15,7 @@
             <ul class="mt-3 space-y-2 text-sm">
                 <li><a href="{{ route('courses.index') }}" class="hover:text-white">Tất cả khoá học</a></li>
                 <li><a href="{{ route('announcements.index') }}" class="hover:text-white">Thông báo</a></li>
+                <li><a href="{{ route('certificates.verify') }}" class="hover:text-white">Xác minh chứng chỉ</a></li>
                 @guest
                     <li><a href="{{ route('register') }}" class="hover:text-white">Đăng ký tài khoản</a></li>
                 @endguest

@@ -1,4 +1,4 @@
-<x-app-layout title="Khoá học">
+<x-app-layout title="Khoá học" description="Thư viện khoá học trực tuyến: lập trình, thiết kế, ngoại ngữ, kỹ năng mềm... Lọc theo danh mục, trình độ, học phí và học thử miễn phí.">
     <section class="bg-brand-700 text-white">
         <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
             <nav class="text-sm text-brand-100"><a href="{{ route('home') }}" class="hover:text-white">Trang chủ</a> / Khoá học</nav>

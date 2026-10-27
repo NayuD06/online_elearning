@@ -4,6 +4,7 @@
 | --- | --- |
 | [mo-ta-trang-web.md](mo-ta-trang-web.md) | Giới thiệu trang web, vai trò người dùng, mô tả từng trang kèm ảnh chụp |
 | [huong-dan-chay.md](huong-dan-chay.md) | Cài đặt và chạy code trên máy, tài khoản mẫu, lỗi thường gặp |
+| [thanh-toan.md](thanh-toan.md) | Thanh toán VNPay / MoMo sandbox (lấy khoá test), chứng chỉ PDF, chuông thông báo, SEO |
 | [kich-ban-test.md](kich-ban-test.md) | Kịch bản kiểm thử thủ công toàn bộ chức năng: các bước và kết quả mong đợi |
 | [nhat-ky-thay-doi.md](nhat-ky-thay-doi.md) | Những việc Claude đã làm trong dự án |
 | [phan-tich-thiet-ke.md](phan-tich-thiet-ke.md) | Phân tích hệ thống: use case, ERD, bảo mật |

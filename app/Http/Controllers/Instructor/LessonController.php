@@ -36,13 +36,14 @@ class LessonController extends Controller
         Gate::authorize('manage', $course);
 
         $lesson = $course->lessons()->create([
-            ...$request->safe()->except('attachments'),
+            ...$request->safe()->except(['attachments', 'video', 'remove_video']),
             'position' => $request->integer('position') ?: (int) $course->lessons()->where('section_id', $request->integer('section_id'))->max('position') + 1,
         ]);
 
+        $this->storeVideo($request, $lesson);
         $this->storeAttachments($request, $lesson);
 
-        return to_route('instructor.courses.curriculum', $course)->with('success', 'Đã thêm bài học.');
+        return to_route('instructor.courses.curriculum', $course)->with('success', $this->savedMessage($course, 'Đã thêm bài học.'));
     }
 
     public function edit(Course $course, Lesson $lesson): View
@@ -61,13 +62,18 @@ class LessonController extends Controller
         Gate::authorize('manage', $course);
 
         $lesson->update([
-            ...$request->safe()->except('attachments'),
+            ...$request->safe()->except(['attachments', 'video', 'remove_video']),
             'position' => $request->integer('position', $lesson->position),
         ]);
 
+        $this->storeVideo($request, $lesson);
         $this->storeAttachments($request, $lesson);
 
-        return to_route('instructor.courses.curriculum', $course)->with('success', 'Đã cập nhật bài học.');
+        $message = $lesson->wasChanged() || $request->hasFile('attachments')
+            ? $this->savedMessage($course, 'Đã cập nhật bài học.')
+            : 'Đã cập nhật bài học.';
+
+        return to_route('instructor.courses.curriculum', $course)->with('success', $message);
     }
 
     public function destroy(Course $course, Lesson $lesson): RedirectResponse
@@ -75,9 +81,10 @@ class LessonController extends Controller
         Gate::authorize('manage', $course);
 
         LessonAttachment::deleteFiles($lesson->attachments);
+        Lesson::deleteVideos([$lesson]);
         $lesson->delete();
 
-        return back()->with('success', 'Đã xoá bài học.');
+        return back()->with('success', $this->savedMessage($course, 'Đã xoá bài học.'));
     }
 
     public function destroyAttachment(Course $course, Lesson $lesson, LessonAttachment $attachment): RedirectResponse
@@ -87,7 +94,27 @@ class LessonController extends Controller
         LessonAttachment::deleteFiles([$attachment]);
         $attachment->delete();
 
-        return back()->with('success', "Đã xoá tài liệu \"{$attachment->name}\".");
+        return back()->with('success', $this->savedMessage($course, "Đã xoá tài liệu \"{$attachment->name}\"."));
+    }
+
+    /**
+     * The success message, telling the instructor when the change sent an approved course back for review.
+     */
+    private function savedMessage(Course $course, string $message): string
+    {
+        return $course->sendBackForReview() ? Course::RESUBMITTED_MESSAGE : $message;
+    }
+
+    /**
+     * A new file replaces the current video; ticking "remove" without a file drops it.
+     */
+    private function storeVideo(LessonRequest $request, Lesson $lesson): void
+    {
+        if ($request->hasFile('video')) {
+            $lesson->replaceVideo($request->file('video'));
+        } elseif ($request->boolean('remove_video')) {
+            $lesson->removeVideo();
+        }
     }
 
     private function storeAttachments(LessonRequest $request, Lesson $lesson): void

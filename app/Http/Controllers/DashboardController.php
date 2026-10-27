@@ -35,6 +35,7 @@ class DashboardController extends Controller
                 'completedLessons' => $completedLessonIds->count(),
                 'averageProgress' => (int) round($courses->avg('progress') ?? 0),
             ],
+            'certificates' => $user->certificates()->pluck('code', 'course_id'),
             'announcements' => Announcement::published()->latest('published_at')->take(5)->get(),
         ]);
     }

@@ -97,13 +97,24 @@ trạng thái **Live** là xong.
 
 Nếu tên miền thật khác với `APP_URL` đã điền, sửa lại `APP_URL` cho đúng rồi deploy lại.
 
-Tài khoản demo:
+Tài khoản demo: `admin@example.com`, `teacher@example.com`, `student@example.com`.
 
-| Vai trò | Email | Mật khẩu |
-|---|---|---|
-| Admin | `admin@example.com` | `Admin@123` |
-| Giảng viên | `teacher@example.com` | `Teacher@123` |
-| Học viên | `student@example.com` | `Student@123` |
+Mật khẩu demo khi chạy local (`Admin@123`...) nằm công khai trong repo, nên **web thật không dùng
+chúng**. Đặt mật khẩu riêng (≥ 6 ký tự, 1 chữ in hoa, 1 ký tự đặc biệt, nên dài 12+ ký tự) bằng biến:
+
+| Biến | Áp dụng cho |
+|---|---|
+| `DEMO_ADMIN_PASSWORD` | `admin@example.com` |
+| `DEMO_TEACHER_PASSWORD` | các giảng viên demo (`teacher@`, `lan.tran@`, `phuc.le@example.com`) |
+| `DEMO_STUDENT_PASSWORD` | học viên demo (`student@example.com`, `giangvien.moi@example.com` và học viên ảo) |
+
+Mỗi lần deploy, lệnh `php artisan app:secure-demo-accounts` (trong `docker/start.sh`) đặt các mật
+khẩu này cho tài khoản demo (đuôi `@example.com/.org/.net`), chỉ chạy lại khi bạn đổi biến. Biến nào
+**không đặt** thì tài khoản demo của vai trò đó, nếu còn dùng mật khẩu công khai, được đổi sang mật
+khẩu ngẫu nhiên (không ai đăng nhập được). Mật khẩu admin bạn đã tự đổi trên web thì giữ nguyên.
+
+Lưu ý: khi đã đặt biến, mật khẩu đổi trên web cho các tài khoản demo sẽ bị đặt lại theo biến ở lần
+đổi biến kế tiếp.
 
 ## 5. Seed lại dữ liệu demo
 

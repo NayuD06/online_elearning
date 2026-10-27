@@ -1,4 +1,6 @@
 <x-admin-layout :title="$course->exists ? 'Sửa khoá học' : 'Thêm khoá học'">
+    @include('instructor.partials.review-notice')
+
     <form method="POST" enctype="multipart/form-data"
           action="{{ $course->exists ? route('instructor.courses.update', $course) : route('instructor.courses.store') }}"
           class="grid gap-6 xl:grid-cols-3">

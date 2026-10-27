@@ -22,13 +22,11 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Demo logins. Every password follows the app rule: 6+ characters, an uppercase letter and a special character.
+     * Passwords of the demo logins, one per role (see config/demo.php).
+     *
+     * @var array<string, string>
      */
-    public const string ADMIN_PASSWORD = 'Admin@123';
-
-    public const string TEACHER_PASSWORD = 'Teacher@123';
-
-    public const string STUDENT_PASSWORD = 'Student@123';
+    private array $passwords = [];
 
     /**
      * Chapters of every demo course, each one => its lesson titles.
@@ -93,7 +91,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@example.com',
         ], [
             'name' => 'Admin System',
-            'password' => self::ADMIN_PASSWORD,
+            'password' => $this->password('admin'),
             'role' => UserRole::Admin,
             'email_verified_at' => now(),
         ]);
@@ -104,7 +102,7 @@ class DatabaseSeeder extends Seeder
             ['Lê Hoàng Phúc', 'phuc.le@example.com'],
         ])->map(fn (array $teacher) => User::updateOrCreate(['email' => $teacher[1]], [
             'name' => $teacher[0],
-            'password' => self::TEACHER_PASSWORD,
+            'password' => $this->password('teacher'),
             'role' => UserRole::Teacher,
             'bio' => 'Giảng viên với hơn 5 năm kinh nghiệm giảng dạy và làm việc thực tế.',
             'email_verified_at' => now(),
@@ -112,10 +110,10 @@ class DatabaseSeeder extends Seeder
 
         $students = collect([User::updateOrCreate(['email' => 'student@example.com'], [
             'name' => 'Phạm Minh Anh',
-            'password' => self::STUDENT_PASSWORD,
+            'password' => $this->password('student'),
             'role' => UserRole::Student,
             'email_verified_at' => now(),
-        ])])->merge(User::factory(24)->create(['role' => UserRole::Student]));
+        ])])->merge(User::factory(24)->create(['role' => UserRole::Student, 'password' => $this->password('student')]));
 
         foreach (self::CATALOG as $categoryName => $courses) {
             $category = Category::firstOrCreate(['slug' => Str::slug($categoryName)], [
@@ -149,13 +147,24 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
+     * The demo password of a role. On a server without DEMO_*_PASSWORD it is random, so the public
+     * fallback passwords never open a live site.
+     */
+    private function password(string $role): string
+    {
+        return $this->passwords[$role] ??= config("demo.{$role}_password") ?: tap(Str::password(24), function () use ($role): void {
+            $this->command?->warn('DEMO_'.strtoupper($role)."_PASSWORD chưa được đặt: tài khoản demo {$role} dùng mật khẩu ngẫu nhiên.");
+        });
+    }
+
+    /**
      * A pending instructor request, a lesson question with its answer and a wishlist, so the new pages are not empty.
      */
     private function seedCommunityDemo(User $student): void
     {
         $pendingTeacher = User::updateOrCreate(['email' => 'giangvien.moi@example.com'], [
             'name' => 'Đỗ Thu Hà',
-            'password' => self::TEACHER_PASSWORD,
+            'password' => $this->password('teacher'),
             'role' => UserRole::Student,
             'bio' => 'Kỹ sư phần mềm muốn chia sẻ kinh nghiệm làm dự án thực tế.',
             'email_verified_at' => now(),

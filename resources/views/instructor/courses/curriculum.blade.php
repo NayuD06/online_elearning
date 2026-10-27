@@ -1,4 +1,6 @@
 <x-admin-layout :title="'Chương & bài học: '.$course->title">
+    @include('instructor.partials.review-notice')
+
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <a href="{{ route('instructor.courses.edit', $course) }}" class="flex items-center gap-1 text-sm text-gray-500 hover:text-brand-700"><x-icon name="chevron-left" class="h-4 w-4" /> Về thông tin khoá học</a>
         <div class="flex flex-wrap items-center gap-2">
@@ -63,7 +65,7 @@
                                     <td class="text-center font-semibold text-brand-700">{{ $lesson->position }}</td>
                                     <td class="font-medium text-gray-900">{{ $lesson->title }}</td>
                                     <td>
-                                        @if ($lesson->video_url)
+                                        @if ($lesson->has_video)
                                             <span class="flex items-center gap-1 text-brand-700"><x-icon name="play" class="h-4 w-4" /> Bài học video</span>
                                         @else
                                             <span class="flex items-center gap-1 text-gray-600"><x-icon name="book" class="h-4 w-4" /> Bài học</span>

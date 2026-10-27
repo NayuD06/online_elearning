@@ -11,7 +11,8 @@ không đụng database thật). Tất cả test phải xanh trước khi push.
 1. Chạy dự án theo [huong-dan-chay.md](huong-dan-chay.md), sau đó `php artisan migrate --seed`
    (hoặc `php artisan migrate:fresh --seed` để có dữ liệu mẫu mới, **xoá sạch dữ liệu cũ**).
 2. Sau khi sửa giao diện, chạy `npm run build` (hoặc giữ `npm run dev` chạy) để CSS có đủ class mới.
-3. Tài khoản mẫu:
+3. Tài khoản mẫu (khi chạy local; trên web thật mật khẩu đặt bằng biến `DEMO_*_PASSWORD`, xem
+   [deploy-render.md](deploy-render.md)):
 
 | Vai trò | Email | Mật khẩu |
 | --- | --- | --- |
@@ -146,11 +147,11 @@ Cần cấu hình theo [dang-nhap-google.md](dang-nhap-google.md). Ở máy ph�
 
 | Mã | Bước thực hiện | Kết quả mong đợi | KQ |
 | --- | --- | --- | --- |
-| HV-01 | Chưa đăng nhập, ở chi tiết khoá học | Nút "Đăng nhập để ghi danh" | |
-| HV-02 | Học viên bấm **Ghi danh khoá học** | Chuyển vào trang học bài đầu tiên; khoá xuất hiện ở Góc học tập | |
+| HV-01 | Chưa đăng nhập, ở chi tiết khoá học | Khoá miễn phí: nút "Đăng nhập để ghi danh"; khoá trả phí: "Đăng nhập để mua khoá học" | |
+| HV-02 | Học viên bấm **Ghi danh khoá học** ở một khoá **miễn phí** | Chuyển vào trang học bài đầu tiên; khoá xuất hiện ở Góc học tập | |
 | HV-03 | Bấm **Đánh dấu hoàn thành** | Chuyển sang bài kế tiếp, % tiến độ tăng, bài cũ có dấu ✓ ở cột phải | |
 | HV-04 | Bấm lại "Đã hoàn thành (bỏ đánh dấu)" ở bài đã xong | Bỏ đánh dấu, % giảm | |
-| HV-05 | Hoàn thành mọi bài | Báo "Chúc mừng! Bạn đã hoàn thành khoá học", Góc học tập ghi 100%, nút đổi thành Ôn tập | |
+| HV-05 | Hoàn thành mọi bài | Chuyển sang trang chứng chỉ, báo "Chúc mừng! … nhận được chứng chỉ"; Góc học tập ghi 100%, nút đổi thành Ôn tập (xem thêm mục 10) | |
 | HV-06 | Nút Bài trước / Bài tiếp và danh sách bài bên phải | Điều hướng đúng thứ tự chương → bài | |
 | HV-07 | Bài có link YouTube | Video nhúng phát được | |
 | HV-08 | **Huỷ ghi danh** ở chi tiết khoá học, xác nhận | Khoá biến mất khỏi Góc học tập; bài không học thử bị khoá lại | |
@@ -227,7 +228,7 @@ câu chưa trả lời của `student@example.com`.
 | GD-08 | Gửi duyệt khi khoá **chưa có bài học** | Báo cần ít nhất một bài học | |
 | GD-09 | Bấm **Gửi duyệt** khi đã có bài | Trạng thái **Chờ duyệt**; admin thấy ở bảng điều khiển | |
 | GD-10 | Danh sách học viên của khoá | Tên học viên, ngày ghi danh, % tiến độ | |
-| GD-11 | Xoá khoá học của mình | Khoá, bài học, ảnh và tài liệu đính kèm bị xoá | |
+| GD-11 | Xoá khoá học của mình | Khoá, bài học, ảnh, video và tài liệu đính kèm bị xoá | |
 
 ### 6.1 Tài liệu đính kèm bài học
 
@@ -256,6 +257,27 @@ câu chưa trả lời của `student@example.com`.
 | QG-03 | Thêm câu hỏi chỉ nhập 1 đáp án | Báo cần ít nhất 2 đáp án | |
 | QG-04 | Chọn đáp án đúng là ô để trống | Báo lỗi đáp án đúng phải có nội dung | |
 | QG-05 | Sửa / xoá câu hỏi, xoá quiz | Thao tác đúng | |
+
+### 6.3 Video bài học (tải lên)
+
+Ở máy, PHP mặc định chỉ cho upload 2–40 MB. Muốn thử video lớn, sửa `php.ini` (đường dẫn xem bằng
+`php --ini`): `upload_max_filesize = 110M`, `post_max_size = 130M`, rồi chạy lại `php artisan serve`.
+Trên Render đã đặt sẵn trong Dockerfile.
+
+| Mã | Bước thực hiện | Kết quả mong đợi | KQ |
+| --- | --- | --- | --- |
+| VD-01 | Giảng viên sửa một bài học, ở mục **Video bài giảng** chọn file MP4 (vài MB), bấm Lưu | Nút đổi thành "Đang lưu...", có dòng "Đang tải video ... lên"; lưu xong về trang Nội dung khoá học, bài có nhãn **Bài học video** | |
+| VD-02 | Mở lại form bài đó | Thấy khung xem trước video, ô **Xoá video đã tải lên** | |
+| VD-03 | Học viên đã ghi danh mở bài học | Video phát ngay trong trang (tua, toàn màn hình được), không có nút tải về trong menu của trình phát | |
+| VD-04 | Bài có cả video tải lên và link YouTube | Trang học phát video tải lên, không hiện YouTube | |
+| VD-05 | Ở form bài có video, chọn file video khác rồi Lưu | Video mới thay video cũ; file cũ bị xoá khỏi `storage/app/public/lesson-videos` (hoặc Cloudinary) | |
+| VD-06 | Tick **Xoá video đã tải lên**, Lưu | Bài quay lại dùng link YouTube (nếu có) hoặc không có video | |
+| VD-07 | Chọn file `.avi`, `.mov`, `.pdf` hoặc đổi đuôi một file `.txt` thành `.mp4` | Báo "Video phải là tệp MP4 hoặc WebM", không lưu file | |
+| VD-08 | Chọn file MP4 > 100 MB | Báo ngay dưới ô chọn file "Video vượt quá 100 MB", form không gửi | |
+| VD-09 | Người chưa ghi danh mở bài (không phải học thử) có video | 403, không thấy video | |
+| VD-10 | Bài **học thử** có video, đăng nhập tài khoản chưa ghi danh | Xem được video | |
+| VD-11 | Xoá bài học có video; xoá cả khoá học có video | File video bị xoá theo | |
+| VD-12 | Trên Render (có `CLOUDINARY_URL`) upload video MP4 rồi mở trang học | Link video bắt đầu bằng `https://res.cloudinary.com/.../video/upload/`; trong Cloudinary file nằm ở `online-elearning/lesson-videos`; deploy lại vẫn còn | |
 
 ## 7. Quản trị viên
 
@@ -290,6 +312,27 @@ câu chưa trả lời của `student@example.com`.
 | AN-01 | **Ảnh đã lưu** (`/admin/media`) | Liệt kê ảnh đã upload, cho biết ảnh đang dùng ở đâu; lọc ảnh không còn dùng; mở ảnh và copy link | |
 | AN-02 | Không có `CLOUDINARY_URL` | Trang ghi đang lưu trong máy (`storage/app/public`) | |
 
+### 7.3 Banner trang chủ
+
+| Mã | Bước thực hiện | Kết quả mong đợi | KQ |
+| --- | --- | --- | --- |
+| BN-01 | Chưa có banner nào, mở trang chủ | Trang chủ giữ phần giới thiệu mặc định (không có khung trượt) | |
+| BN-02 | Admin → **Banner trang chủ** → **Thêm banner**: chọn ảnh ngang (1920×600), tiêu đề, mô tả, đường dẫn `/khoa-hoc`, chữ nút "Xem khoá học", tick Bật hiển thị | Báo "Đã thêm banner"; danh sách có ảnh nhỏ, nhãn xanh **Đang hiển thị** | |
+| BN-03 | Mở trang chủ | Banner hiện trên cùng: ảnh, tiêu đề, mô tả, nút vàng; bấm nút sang `/khoa-hoc` ở cùng tab | |
+| BN-04 | Thêm banner thứ hai, đường dẫn `https://ut.edu.vn` | Trang chủ tự chuyển banner sau 6 giây; có nút ‹ › và chấm tròn; rê chuột lên thì dừng; điện thoại vuốt trái/phải được; nút banner này mở tab mới | |
+| BN-05 | Đổi **Thứ tự** (số nhỏ hiện trước) | Thứ tự trên trang chủ đổi theo | |
+| BN-06 | Bỏ tick Bật hiển thị | Banner biến mất khỏi trang chủ; danh sách ghi **Đang tắt** | |
+| BN-07 | Đặt "Hiện từ" là ngày mai | Không hiện trên trang chủ; danh sách ghi **Chờ đến ngày** | |
+| BN-08 | Đặt "Đến hết" là hôm qua | Không hiện; danh sách ghi **Đã hết hạn** | |
+| BN-09 | "Đến hết" trước "Hiện từ" | Báo "Ngày kết thúc phải sau ngày bắt đầu" | |
+| BN-10 | Đường dẫn `javascript:alert(1)` hoặc `khoa-hoc` (thiếu `/`) | Báo lỗi đường dẫn, không lưu | |
+| BN-11 | Thêm banner không chọn ảnh; chọn file PDF hoặc ảnh > 4 MB | Báo lỗi ảnh | |
+| BN-12 | Sửa banner không chọn ảnh mới | Ảnh cũ giữ nguyên; chọn ảnh mới thì ảnh cũ bị xoá | |
+| BN-13 | Xoá banner | Banner và ảnh bị xoá; **Ảnh đã lưu** không còn ảnh đó | |
+| BN-14 | **Ảnh đã lưu**, lọc thư mục "Banner trang chủ" | Thấy ảnh banner, ghi đang dùng ở `Banner "..."` | |
+| BN-15 | Giảng viên/học viên mở `/admin/banners` | 403 | |
+| BN-16 | Xem trang chủ trên điện thoại (hoặc DevTools chế độ mobile) | Banner không tràn ngang, chữ đọc được, nút bấm được | |
+
 ## 8. Lưu ảnh và gửi email trên Render
 
 | Mã | Bước thực hiện | Kết quả mong đợi | KQ |
@@ -310,6 +353,81 @@ câu chưa trả lời của `student@example.com`.
 | BM-04 | Đăng ký với `account_type=admin` (sửa HTML bằng DevTools) | Báo lỗi loại tài khoản không hợp lệ, không tạo tài khoản | |
 | BM-05 | Tài khoản Google có email trùng email **admin** | Không đăng nhập được vào admin; báo phải dùng email + mật khẩu | |
 | BM-06 | Học viên gửi `PATCH /admin/users/{id}/lock` (sửa form bằng DevTools) | 403 | |
+
+## 10. Chứng chỉ hoàn thành khoá học
+
+| Mã | Bước thực hiện | Kết quả mong đợi | KQ |
+| --- | --- | --- | --- |
+| CC-01 | Học viên ghi danh một khoá miễn phí, bấm **Đánh dấu hoàn thành** đến bài cuối | Chuyển sang trang `/chung-chi/UTH-XXXX-XXXX`: dải xanh "Chứng chỉ hợp lệ", bản xem trước có tên học viên, tên khoá, ngày cấp, giảng viên | |
+| CC-02 | Bấm chuông thông báo | Có "Chúc mừng! Bạn đã nhận chứng chỉ", bấm vào mở đúng trang chứng chỉ | |
+| CC-03 | Bấm **Tải chứng chỉ (PDF)** | Tải file `chung-chi-UTH-….pdf`, khổ A4 ngang, tiếng Việt có dấu hiển thị đúng, cuối trang có mã và link xác minh | |
+| CC-04 | Bỏ đánh dấu một bài rồi đánh dấu lại | Không cấp chứng chỉ thứ hai, mã chứng chỉ giữ nguyên | |
+| CC-05 | Menu tài khoản → **Chứng chỉ của tôi** | Liệt kê chứng chỉ, có nút Tải PDF và Xem và chia sẻ | |
+| CC-06 | Góc học tập, khoá đã 100% | Có nút "Chứng chỉ" dưới nút Ôn tập; trang học bài có dải vàng "Bạn đã hoàn thành khoá học này" | |
+| CC-07 | Mở link chứng chỉ ở cửa sổ ẩn danh (chưa đăng nhập) | Xem được trang xác minh nhưng **không** có nút tải PDF | |
+| CC-08 | Chân trang → **Xác minh chứng chỉ**, nhập mã đúng (gõ chữ thường, có dấu cách) | Chuyển tới trang chứng chỉ đó | |
+| CC-09 | Nhập mã sai `UTH-0000-0000` | Báo "Không tìm thấy chứng chỉ có mã …" | |
+| CC-10 | Người khác (đã đăng nhập) mở `/chung-chi/{mã}/tai-ve` của học viên khác | 403; admin mở thì tải được | |
+| CC-11 | Tài khoản đã hoàn thành khoá **trước khi có tính năng này** (dữ liệu mẫu) mở **Chứng chỉ của tôi** | Chứng chỉ được cấp bù cho các khoá đã 100% | |
+| CC-12 | Giảng viên tự học thử khoá của mình đến hết | Không cấp chứng chỉ (chỉ cấp cho người ghi danh) | |
+
+## 11. Chuông thông báo trong web
+
+| Mã | Bước thực hiện | Kết quả mong đợi | KQ |
+| --- | --- | --- | --- |
+| CH-01 | Đăng nhập bất kỳ, nhìn thanh trên cùng (máy tính và điện thoại) | Có biểu tượng chuông cạnh tên tài khoản; trên điện thoại chuông nằm cạnh nút menu | |
+| CH-02 | Giảng viên bấm **Gửi duyệt** một khoá | Admin thấy số đỏ trên chuông, mục "Khoá học mới chờ duyệt"; bấm vào mở trang Duyệt khoá học lọc "Chờ duyệt" | |
+| CH-02b | Giảng viên sửa một khoá **đã xuất bản** (khoá tự về "Chờ duyệt") | Admin có "Khoá học đã sửa, chờ duyệt lại" | |
+| CH-03 | Admin duyệt khoá đó | Giảng viên có thông báo "Khoá học đã được duyệt" (vẫn nhận email như cũ) | |
+| CH-04 | Admin từ chối một khoá kèm lý do | Giảng viên có "Khoá học chưa được duyệt" kèm lý do; bấm vào mở trang sửa khoá | |
+| CH-05 | Học viên ghi danh khoá miễn phí của giảng viên | Giảng viên có "Có học viên mới"; bấm vào mở danh sách học viên của khoá | |
+| CH-06 | Học viên đặt câu hỏi dưới bài học | Giảng viên có "… vừa đặt câu hỏi"; bấm vào nhảy tới đúng câu hỏi | |
+| CH-07 | Giảng viên trả lời | Học viên có "Câu hỏi của bạn đã có trả lời" | |
+| CH-08 | Admin duyệt / từ chối yêu cầu làm giảng viên | Người gửi yêu cầu có thông báo tương ứng | |
+| CH-09 | Bấm một thông báo chưa đọc | Mở đúng trang; quay lại thì thông báo đó hết nền xanh, số đỏ giảm 1 | |
+| CH-10 | Bấm **Đánh dấu đã đọc hết** | Số đỏ biến mất | |
+| CH-11 | Bấm **Xem tất cả** | Trang `/thong-bao-cua-toi` liệt kê mọi thông báo, có phân trang | |
+| CH-12 | Admin / giảng viên ở khu quản trị | Chuông nằm trên thanh tiêu đề, cạnh ảnh đại diện | |
+| CH-13 | Cấu hình mail sai rồi duyệt một khoá | Duyệt vẫn thành công, thông báo trong chuông vẫn có (chỉ email không gửi được) | |
+
+## 12. Mua khoá học trả phí (VNPay / MoMo)
+
+Cần điền khoá sandbox trong `.env` trước, xem [thanh-toan.md](thanh-toan.md). Thanh toán trên máy
+(`localhost`) vẫn chạy được vì trình duyệt tự quay về; riêng IPN (cổng gọi ngầm về server) chỉ tới
+được web thật trên Render.
+
+| Mã | Bước thực hiện | Kết quả mong đợi | KQ |
+| --- | --- | --- | --- |
+| TT-01 | Học viên mở một khoá có giá (ví dụ 299.000 đ) | Nút **Mua khoá học**, dòng "Thanh toán qua VNPay hoặc ví MoMo" | |
+| TT-02 | Bấm **Mua khoá học** | Trang thanh toán: thông tin khoá, giá, chỉ hiện các cổng đã điền khoá trong `.env` | |
+| TT-03 | Chưa điền khoá cổng nào | Trang thanh toán báo "Trang web chưa bật cổng thanh toán nào" | |
+| TT-04 | Chọn **VNPay**, bấm Thanh toán | Sang `sandbox.vnpayment.vn`, số tiền đúng | |
+| TT-05 | Ở VNPay chọn ngân hàng NCB, nhập thẻ test (xem thanh-toan.md), OTP `123456` | Quay về trang "Thanh toán thành công"; khoá vào Góc học tập; chuông có "Thanh toán thành công" | |
+| TT-06 | Giảng viên của khoá đó xem chuông | Có "Có học viên mua khoá học" | |
+| TT-07 | Thanh toán VNPay rồi bấm **Huỷ** ở trang VNPay | Trang "Thanh toán không thành công: Bạn đã huỷ giao dịch."; chưa được ghi danh; có nút "Thử thanh toán lại" | |
+| TT-08 | Chọn **Ví MoMo**, bấm Thanh toán | Sang trang MoMo test có mã QR / form thẻ | |
+| TT-09 | Thanh toán MoMo bằng app MoMo test hoặc thẻ ATM test | Quay về "Thanh toán thành công", được ghi danh | |
+| TT-10 | Ở trang MoMo bấm huỷ | "Thanh toán không thành công", chưa ghi danh | |
+| TT-11 | Sau khi trả tiền, ở chi tiết khoá học | Không còn nút "Huỷ ghi danh", thay bằng "Bạn đã mua khoá học này" | |
+| TT-12 | Học viên chưa mua gửi form ghi danh khoá trả phí (DevTools) | Bị chuyển về trang thanh toán, không được ghi danh | |
+| TT-13 | Sửa số tiền trên URL trả về (`vnp_Amount`) rồi mở lại | Báo "Kết quả thanh toán không hợp lệ (sai chữ ký)", đơn không đổi | |
+| TT-14 | Menu tài khoản → **Lịch sử thanh toán** | Có các đơn kèm trạng thái; bấm vào xem chi tiết (mã đơn, mã giao dịch) | |
+| TT-15 | Học viên khác mở `/don-hang/{id}` của người khác | 404 | |
+| TT-16 | Admin → **Đơn hàng** | Thẻ doanh thu, doanh thu tháng này, số đơn; lọc theo trạng thái, cổng; tìm theo mã đơn / email | |
+| TT-17 | Giảng viên hoặc admin mở khoá trả phí của chính khoá mình | Vào học không cần trả tiền | |
+| TT-18 | `PAYMENT_DEMO=true` trong `.env` | Có thêm "Thanh toán thử (demo)": bấm là thành công ngay (chỉ dùng khi chưa có khoá sandbox) | |
+
+## 13. SEO và chia sẻ link
+
+| Mã | Bước thực hiện | Kết quả mong đợi | KQ |
+| --- | --- | --- | --- |
+| SEO-01 | Mở chi tiết khoá học, **Xem nguồn trang** (Ctrl+U) | Có `<title>Tên khoá | UTH E-Learning</title>`, `meta description` = mô tả ngắn, các thẻ `og:` và khối `application/ld+json` kiểu Course | |
+| SEO-02 | Dán link khoá học vào Facebook / Zalo / Messenger (trên web thật) | Thẻ xem trước có ảnh bìa khoá học, tên và mô tả | |
+| SEO-03 | Dán link trang chủ | Ảnh xem trước là ảnh mặc định `public/images/og-default.png` | |
+| SEO-04 | Mở `/sitemap.xml` | Danh sách trang chủ, thư viện, các khoá **đã xuất bản**, thông báo, hồ sơ giảng viên; không có khoá nháp | |
+| SEO-05 | Mở `/robots.txt` | Chặn `/admin`, `/instructor`, `/hoc/`, `/thanh-toan/`… | |
+| SEO-06 | Xem nguồn Góc học tập / trang học bài / trang quản trị | Có `<meta name="robots" content="noindex, nofollow">` | |
+| SEO-07 | Kiểm tra link khoá học bằng [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) và [Rich Results Test](https://search.google.com/test/rich-results) | Không báo lỗi thiếu thẻ | |
 
 ---
 

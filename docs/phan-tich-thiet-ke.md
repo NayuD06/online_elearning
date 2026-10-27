@@ -217,4 +217,4 @@ php artisan storage:link
 php artisan serve
 ```
 
-Tài khoản mẫu: `admin@example.com` / `Admin@123` (quản trị), `teacher@example.com` / `Teacher@123` (giảng viên), `student@example.com` / `Student@123` (học viên).
+Tài khoản mẫu: `admin@example.com` / `Admin@123` (quản trị), `teacher@example.com` / `Teacher@123` (giảng viên), `student@example.com` / `Student@123` (học viên). Các mật khẩu này chỉ dùng khi chạy local; trên web thật đặt bằng biến `DEMO_*_PASSWORD`.

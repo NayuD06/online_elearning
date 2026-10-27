@@ -165,6 +165,30 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * @return HasMany<Certificate, $this>
+     */
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(Certificate::class);
+    }
+
+    /**
+     * @return HasMany<Order, $this>
+     */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Whether the user already paid for the course (kept even if the enrollment is removed later).
+     */
+    public function hasPaidFor(Course $course): bool
+    {
+        return $this->orders()->paid()->where('course_id', $course->id)->exists();
+    }
+
+    /**
      * @return HasMany<QuizAttempt, $this>
      */
     public function quizAttempts(): HasMany

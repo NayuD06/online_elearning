@@ -1,2 +1,15 @@
 User-agent: *
-Disallow:
+# Trang riêng tư (học bài, quản trị, tài khoản, thanh toán) không cần lên Google
+Disallow: /admin
+Disallow: /instructor
+Disallow: /hoc/
+Disallow: /kiem-tra/
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /thanh-toan/
+Disallow: /don-hang
+Disallow: /thong-bao-cua-toi
+Disallow: /chung-chi-cua-toi
+Disallow: /khoa-hoc-yeu-thich
+
+# Danh sách trang công khai: <địa chỉ web>/sitemap.xml (gửi trong Google Search Console)

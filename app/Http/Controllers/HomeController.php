@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Models\Announcement;
+use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Course;
 use App\Models\Enrollment;
@@ -15,6 +16,7 @@ class HomeController extends Controller
     public function __invoke(): View
     {
         return view('home', [
+            'banners' => Banner::showing()->get(),
             'featuredCourses' => Course::published()
                 ->with(['category', 'instructor'])
                 ->withCount(['lessons', 'enrollments'])

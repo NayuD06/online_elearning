@@ -1,4 +1,4 @@
-<x-app-layout title="Thông báo">
+<x-app-layout title="Thông báo" description="Tin tức và thông báo mới nhất từ UTH E-Learning.">
     <section class="bg-brand-700 text-white">
         <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
             <nav class="text-sm text-brand-100"><a href="{{ route('home') }}" class="hover:text-white">Trang chủ</a> / Thông báo</nav>

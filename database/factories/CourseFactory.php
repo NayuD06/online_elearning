@@ -32,11 +32,17 @@ class CourseFactory extends Factory
             'slug' => Str::slug($title).'-'.Str::lower(Str::random(4)),
             'summary' => fake()->sentence(15),
             'description' => '<p>'.fake()->paragraph(5).'</p>',
-            'price' => fake()->randomElement([0, 199000, 299000, 499000]),
+            // Free by default so tests can enrol directly; use paid() for courses bought through checkout.
+            'price' => 0,
             'level' => fake()->randomElement(CourseLevel::cases()),
             'status' => CourseStatus::Published,
             'published_at' => now(),
         ];
+    }
+
+    public function paid(int $price = 299000): static
+    {
+        return $this->state(fn (array $attributes) => ['price' => $price]);
     }
 
     public function draft(): static

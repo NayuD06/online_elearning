@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Quiz;
 use App\Models\Section;
+use App\Notifications\CertificateIssued;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -45,6 +47,7 @@ class LearningController extends Controller
             'attachments' => $lesson->attachments()->get(),
             'questions' => $lesson->questions()->with(['user', 'answers.user'])->latest()->paginate(10)->fragment('hoi-dap'),
             'canAnswer' => $request->user()->can('manage', $course),
+            'certificate' => $request->user()->certificates()->where('course_id', $course->id)->first(),
         ]);
     }
 
@@ -61,6 +64,17 @@ class LearningController extends Controller
 
         $isCourseFinished = $user->progressIn($course) === 100;
         $user->enrollments()->where('course_id', $course->id)->update(['completed_at' => $isCourseFinished ? now() : null]);
+
+        // A certificate stays valid even if a lesson is unmarked later.
+        if ($isCourseFinished && $user->isEnrolledIn($course)) {
+            $certificate = Certificate::issueFor($user, $course);
+
+            if ($certificate->wasRecentlyCreated) {
+                $user->notify(new CertificateIssued($certificate));
+
+                return to_route('certificates.show', $certificate)->with('success', 'Chúc mừng! Bạn đã hoàn thành khoá học và nhận được chứng chỉ.');
+            }
+        }
 
         $lessons = $course->curriculumLessons()->get();
         $nextLesson = $lessons->get($lessons->search(fn (Lesson $item) => $item->id === $lesson->id) + 1);

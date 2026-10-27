@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\EnsureAccountIsNotLocked;
 use App\Http\Middleware\EnsureUserHasRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\AuthenticateSession;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,8 +19,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Railway (và các nền tảng tương tự) chạy app sau proxy HTTPS
         $middleware->trustProxies(at: '*');
 
-        // Sign out accounts an admin locked while they were signed in.
-        $middleware->web(append: [EnsureAccountIsNotLocked::class]);
+        // Sign out accounts an admin locked while they were signed in, and every other session of an
+        // account whose password changed (e.g. reset by its real owner).
+        $middleware->web(append: [AuthenticateSession::class, EnsureAccountIsNotLocked::class]);
+
+        // Clickjacking, MIME sniffing and HTTPS headers on every response, error pages included.
+        $middleware->append(AddSecurityHeaders::class);
 
         $middleware->alias([
             'role' => EnsureUserHasRole::class,

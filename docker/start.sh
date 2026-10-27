@@ -26,6 +26,8 @@ else
     php artisan migrate --force
     php artisan app:seed-if-empty
 fi
+# Tài khoản demo không được giữ mật khẩu công khai trong repo (Admin@123...): dùng DEMO_*_PASSWORD hoặc mật khẩu ngẫu nhiên
+php artisan app:secure-demo-accounts
 php artisan optimize
 
 exec apache2-foreground

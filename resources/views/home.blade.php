@@ -1,4 +1,70 @@
-<x-app-layout title="Trang chủ">
+<x-app-layout title="Học trực tuyến mọi lúc, mọi nơi">
+    {{-- Banner slides managed in /admin/banners --}}
+    @if ($banners->isNotEmpty())
+        <section aria-roledescription="carousel" aria-label="Banner" class="relative overflow-hidden bg-gray-900"
+                 x-data="{
+                     current: 0,
+                     total: {{ $banners->count() }},
+                     paused: false,
+                     touchX: null,
+                     go(index) { this.current = (index + this.total) % this.total },
+                     init() {
+                         if (this.total < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+                         setInterval(() => { if (! this.paused && ! document.hidden) this.go(this.current + 1) }, 6000);
+                     },
+                 }"
+                 @mouseenter="paused = true" @mouseleave="paused = false" @focusin="paused = true" @focusout="paused = false"
+                 @touchstart.passive="touchX = $event.touches[0].clientX"
+                 @touchend="if (touchX !== null && Math.abs($event.changedTouches[0].clientX - touchX) > 40) go(current + ($event.changedTouches[0].clientX < touchX ? 1 : -1)); touchX = null"
+                 @keydown.left="go(current - 1)" @keydown.right="go(current + 1)">
+            <div class="relative h-64 sm:h-80 lg:h-[26rem]">
+                @foreach ($banners as $banner)
+                    <div x-show="current === {{ $loop->index }}" @if (! $loop->first) x-cloak @endif
+                         x-transition:enter="transition-opacity duration-700" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                         x-transition:leave="absolute inset-0 transition-opacity duration-700" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                         role="group" aria-roledescription="slide" aria-label="{{ $loop->iteration }} / {{ $loop->count }}"
+                         class="absolute inset-0">
+                        <img src="{{ $banner->image_url }}" alt="" class="h-full w-full object-cover" @if (! $loop->first) loading="lazy" @endif>
+                        <div class="absolute inset-0 bg-gradient-to-r from-gray-900/80 via-gray-900/40 to-transparent"></div>
+                        <div class="absolute inset-0 mx-auto flex max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+                            <div class="max-w-xl text-white">
+                                <h2 class="text-2xl font-bold leading-tight sm:text-4xl">{{ $banner->title }}</h2>
+                                @if ($banner->subtitle)
+                                    <p class="mt-3 line-clamp-3 text-sm text-gray-100 sm:text-lg">{{ $banner->subtitle }}</p>
+                                @endif
+                                @if ($banner->link_url)
+                                    <a href="{{ $banner->link_url }}" @if ($banner->is_external_link) target="_blank" rel="noopener" @endif
+                                       class="btn mt-6 bg-amber-400 text-gray-900 hover:bg-amber-300">
+                                        {{ $banner->button_label ?: 'Xem ngay' }} <x-icon name="arrow-right" class="h-4 w-4" />
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            @if ($banners->count() > 1)
+                <button type="button" @click="go(current - 1)" aria-label="Banner trước"
+                        class="absolute left-3 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/20 p-2 text-white backdrop-blur transition hover:bg-white/40 sm:block">
+                    <x-icon name="chevron-left" class="h-6 w-6" />
+                </button>
+                <button type="button" @click="go(current + 1)" aria-label="Banner sau"
+                        class="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/20 p-2 text-white backdrop-blur transition hover:bg-white/40 sm:block">
+                    <x-icon name="chevron-right" class="h-6 w-6" />
+                </button>
+                <div class="absolute inset-x-0 bottom-4 flex justify-center gap-2">
+                    @foreach ($banners as $banner)
+                        <button type="button" @click="go({{ $loop->index }})" aria-label="Xem banner {{ $loop->iteration }}"
+                                :aria-current="current === {{ $loop->index }}"
+                                :class="current === {{ $loop->index }} ? 'w-8 bg-white' : 'w-2.5 bg-white/50 hover:bg-white/80'"
+                                class="h-2.5 rounded-full transition-all"></button>
+                    @endforeach
+                </div>
+            @endif
+        </section>
+    @endif
+
     {{-- Hero --}}
     <section class="relative overflow-hidden bg-gradient-to-br from-brand-700 via-brand-600 to-teal-500 text-white">
         <div class="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-white/10"></div>

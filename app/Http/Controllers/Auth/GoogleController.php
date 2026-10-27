@@ -9,7 +9,9 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 use Throwable;
@@ -81,6 +83,12 @@ class GoogleController extends Controller
         }
 
         if ($user) {
+            if ($user->email_verified_at === null) {
+                // Nobody proved they own this email yet, so whoever registered it (or switched to it) may not be
+                // the owner who now signs in with Google: drop the password and every session they could still use.
+                $this->releaseUnprovenAccount($user);
+            }
+
             // Link an existing account (e.g. registered with email + password) to Google; keep its role.
             $user->forceFill([
                 'google_id' => $googleUser->getId(),
@@ -108,6 +116,24 @@ class GoogleController extends Controller
         $homeRoute = $user->managementRoute() ?? 'dashboard';
 
         return redirect()->intended(route($homeRoute, absolute: false));
+    }
+
+    /**
+     * Take an account back from whoever created it with an email they never confirmed.
+     */
+    private function releaseUnprovenAccount(User $user): void
+    {
+        $user->forceFill([
+            'password' => null,
+            'remember_token' => Str::random(60),
+            // A request to teach made before the email was proven is not the owner's.
+            'instructor_status' => $user->hasPendingInstructorRequest() ? null : $user->instructor_status,
+            'instructor_requested_at' => $user->hasPendingInstructorRequest() ? null : $user->instructor_requested_at,
+        ]);
+
+        if (config('session.driver') === 'database') {
+            DB::connection(config('session.connection'))->table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
+        }
     }
 
     private function isConfigured(): bool

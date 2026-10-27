@@ -5,7 +5,24 @@
     $lessonNumber = 1;
 @endphp
 
-<x-app-layout :title="$course->title">
+<x-app-layout :title="$course->title" :description="$course->summary" :image="$course->thumbnail_url" :noindex="! $course->isPublished()">
+    @push('head')
+        {{-- Structured data so Google can show the course as a rich result --}}
+        <script type="application/ld+json">{!! json_encode(array_filter([
+            '@context' => 'https://schema.org',
+            '@type' => 'Course',
+            'name' => $course->title,
+            'description' => $course->summary,
+            'url' => route('courses.show', $course),
+            'image' => $course->thumbnail_url,
+            'inLanguage' => 'vi',
+            'educationalLevel' => $course->level->label(),
+            'provider' => ['@type' => 'Organization', 'name' => config('app.name'), 'sameAs' => url('/')],
+            'instructor' => ['@type' => 'Person', 'name' => $course->instructor->name],
+            'offers' => ['@type' => 'Offer', 'category' => $course->isFree() ? 'Free' : 'Paid', 'price' => $course->price, 'priceCurrency' => 'VND'],
+            'aggregateRating' => $course->reviews_avg_rating ? ['@type' => 'AggregateRating', 'ratingValue' => round((float) $course->reviews_avg_rating, 1), 'reviewCount' => $reviews->total()] : null,
+        ]), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
+    @endpush
     @unless ($course->isPublished())
         <div class="bg-amber-100 px-4 py-2 text-center text-sm text-amber-800">
             Khoá học đang ở trạng thái <strong>{{ $course->status->label() }}</strong> nên chưa hiển thị công khai. Chỉ giảng viên phụ trách và quản trị viên xem được trang này.
@@ -201,11 +218,20 @@
                             <a href="{{ route('learn.show', $course) }}" class="btn-primary mt-4 w-full py-3">
                                 <x-icon name="play" class="h-5 w-5" /> Vào học ngay
                             </a>
-                            <form method="POST" action="{{ route('enrollments.destroy', $course) }}" onsubmit="return confirm('Bạn chắc chắn muốn huỷ ghi danh? Tiến độ học sẽ được giữ lại.')">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn-ghost mt-2 w-full text-rose-600">Huỷ ghi danh</button>
-                            </form>
+                            @if ($hasPaid)
+                                <p class="mt-2 text-center text-xs text-gray-500">Bạn đã mua khoá học này. <a href="{{ route('orders.index') }}" class="text-brand-700 hover:underline">Xem hoá đơn</a></p>
+                            @else
+                                <form method="POST" action="{{ route('enrollments.destroy', $course) }}" onsubmit="return confirm('Bạn chắc chắn muốn huỷ ghi danh? Tiến độ học sẽ được giữ lại.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn-ghost mt-2 w-full text-rose-600">Huỷ ghi danh</button>
+                                </form>
+                            @endif
+                        @elseif ($course->isPublished() && ! $course->isFree() && ! $hasPaid && ! Auth::user()->can('manage', $course))
+                            <a href="{{ route('payments.checkout', $course) }}" class="btn-primary mt-4 w-full py-3">
+                                <x-icon name="lock-open" class="h-5 w-5" /> Mua khoá học
+                            </a>
+                            <p class="mt-2 text-center text-xs text-gray-500">Thanh toán qua VNPay hoặc ví MoMo</p>
                         @elseif ($course->isPublished())
                             <form method="POST" action="{{ route('enrollments.store', $course) }}">
                                 @csrf
@@ -234,7 +260,7 @@
                             </form>
                         @endif
                     @else
-                        <a href="{{ route('login') }}" class="btn-primary mt-4 w-full py-3">Đăng nhập để ghi danh</a>
+                        <a href="{{ route('login') }}" class="btn-primary mt-4 w-full py-3">{{ $course->isFree() ? 'Đăng nhập để ghi danh' : 'Đăng nhập để mua khoá học' }}</a>
                     @endauth
 
                     <ul class="mt-6 space-y-3 text-sm text-gray-600">
@@ -242,6 +268,7 @@
                         <li class="flex items-center gap-2"><x-icon name="clock" class="h-4 w-4 text-brand-600" /> Tổng thời lượng {{ $totalMinutes }} phút</li>
                         <li class="flex items-center gap-2"><x-icon name="chart" class="h-4 w-4 text-brand-600" /> Trình độ {{ Str::lower($course->level->label()) }}</li>
                         <li class="flex items-center gap-2"><x-icon name="check-circle" class="h-4 w-4 text-brand-600" /> Theo dõi tiến độ từng bài</li>
+                        <li class="flex items-center gap-2"><x-icon name="trophy" class="h-4 w-4 text-brand-600" /> Chứng chỉ khi hoàn thành</li>
                     </ul>
                 </div>
             </div>

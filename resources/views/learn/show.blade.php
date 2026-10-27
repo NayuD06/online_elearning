@@ -15,10 +15,20 @@
             <button @click="outline = ! outline" class="btn-secondary lg:hidden"><x-icon name="list" class="h-4 w-4" /> Danh sách bài</button>
         </div>
 
+        @if ($certificate)
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                <p class="flex items-center gap-2 text-sm text-amber-900"><x-icon name="trophy" class="h-5 w-5 shrink-0" /> Bạn đã hoàn thành khoá học này và nhận chứng chỉ.</p>
+                <a href="{{ route('certificates.show', $certificate) }}" class="btn-primary btn-sm">Xem chứng chỉ</a>
+            </div>
+        @endif
+
         <div class="grid gap-6 lg:grid-cols-3">
             <div class="space-y-6 lg:col-span-2">
                 <div class="card overflow-hidden">
-                    @if ($lesson->embed_url)
+                    @if ($lesson->video_file_url)
+                        <video src="{{ $lesson->video_file_url }}" title="{{ $lesson->title }}" controls preload="metadata" playsinline controlslist="nodownload"
+                               oncontextmenu="return false" class="aspect-video w-full bg-gray-900"></video>
+                    @elseif ($lesson->embed_url)
                         <iframe src="{{ $lesson->embed_url }}" title="{{ $lesson->title }}" class="aspect-video w-full bg-gray-900" allowfullscreen
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
                     @elseif ($lesson->video_url)
@@ -54,7 +64,7 @@
                     @else
                         <form method="POST" action="{{ route('enrollments.store', $course) }}">
                             @csrf
-                            <button class="btn-primary w-full sm:w-auto"><x-icon name="academic" class="h-5 w-5" /> Ghi danh để học tiếp</button>
+                            <button class="btn-primary w-full sm:w-auto"><x-icon name="academic" class="h-5 w-5" /> {{ $course->isFree() ? 'Ghi danh để học tiếp' : 'Mua khoá học để học tiếp' }}</button>
                         </form>
                     @endif
 

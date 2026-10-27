@@ -61,6 +61,24 @@ services:
         value: UTH E-Learning
       - key: AUTH_VERIFY_EMAIL
         sync: false
+      # Mật khẩu tài khoản demo trên web thật (không đặt thì mật khẩu ngẫu nhiên): xem docs/deploy-render.md
+      - key: DEMO_ADMIN_PASSWORD
+        sync: false
+      - key: DEMO_TEACHER_PASSWORD
+        sync: false
+      - key: DEMO_STUDENT_PASSWORD
+        sync: false
+      # Thanh toán khoá học (sandbox): xem docs/thanh-toan.md
+      - key: VNPAY_TMN_CODE
+        sync: false
+      - key: VNPAY_HASH_SECRET
+        sync: false
+      - key: MOMO_PARTNER_CODE
+        sync: false
+      - key: MOMO_ACCESS_KEY
+        sync: false
+      - key: MOMO_SECRET_KEY
+        sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET

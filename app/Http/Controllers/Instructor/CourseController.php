@@ -4,11 +4,15 @@ namespace App\Http\Controllers\Instructor;
 
 use App\Enums\CourseLevel;
 use App\Enums\CourseStatus;
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Instructor\CourseRequest;
 use App\Models\Category;
 use App\Models\Course;
+use App\Models\Lesson;
 use App\Models\LessonAttachment;
+use App\Models\User;
+use App\Notifications\CourseSubmittedForReview;
 use App\Support\UniqueSlug;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -83,7 +87,7 @@ class CourseController extends Controller
     {
         Gate::authorize('manage', $course);
 
-        DB::transaction(function () use ($request, $course): void {
+        $changed = DB::transaction(function () use ($request, $course): bool {
             $attributes = [
                 ...$request->safe()->only(['title', 'category_id', 'summary', 'description', 'price', 'level']),
                 'slug' => UniqueSlug::for(Course::class, $request->string('title'), $course->id),
@@ -104,9 +108,13 @@ class CourseController extends Controller
             $course->images()->whereKey($imagesToDelete->modelKeys())->delete();
 
             $this->storeGalleryImages($request, $course);
+
+            return $course->wasChanged() || $imagesToDelete->isNotEmpty() || $request->hasFile('images');
         });
 
-        return to_route('instructor.courses.edit', $course)->with('success', 'Đã lưu thay đổi khoá học.');
+        $message = $changed && $course->sendBackForReview() ? Course::RESUBMITTED_MESSAGE : 'Đã lưu thay đổi khoá học.';
+
+        return to_route('instructor.courses.edit', $course)->with('success', $message);
     }
 
     /**
@@ -130,6 +138,8 @@ class CourseController extends Controller
             'submitted_at' => now(),
         ]);
 
+        User::where('role', UserRole::Admin)->get()->each->notify(new CourseSubmittedForReview($course));
+
         return back()->with('success', 'Đã gửi khoá học cho quản trị viên duyệt.');
     }
 
@@ -139,6 +149,7 @@ class CourseController extends Controller
 
         Storage::disk('media')->delete(array_filter([$course->thumbnail, ...$course->images->pluck('path')]));
         LessonAttachment::deleteFiles(LessonAttachment::whereIn('lesson_id', $course->lessons()->select('id'))->get());
+        Lesson::deleteVideos($course->lessons()->whereNotNull('video_path')->get(['id', 'video_path']));
         $course->delete();
 
         return to_route('instructor.courses.index')->with('success', 'Đã xoá khoá học.');

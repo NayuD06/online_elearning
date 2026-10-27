@@ -18,7 +18,8 @@ class CourseRejected extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        // Saved for the bell first, so it is kept even when the email fails.
+        return ['database', 'mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -30,5 +31,18 @@ class CourseRejected extends Notification
             ->line($this->course->rejection_reason)
             ->action('Sửa khoá học', route('instructor.courses.edit', $this->course))
             ->line('Sau khi chỉnh sửa, bấm "Gửi duyệt" để quản trị viên xem lại.');
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'icon' => 'x',
+            'title' => 'Khoá học chưa được duyệt',
+            'body' => "\"{$this->course->title}\": {$this->course->rejection_reason}",
+            'url' => route('instructor.courses.edit', $this->course),
+        ];
     }
 }

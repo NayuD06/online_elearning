@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
+use App\Models\Banner;
 use App\Models\Course;
 use App\Models\CourseImage;
 use App\Models\Lesson;
@@ -32,6 +33,7 @@ class MediaController extends Controller
         'courses' => 'Ảnh khoá học',
         'editor' => 'Ảnh trong bài viết',
         'announcements' => 'Ảnh thông báo',
+        'banners' => 'Banner trang chủ',
     ];
 
     public function index(Request $request): View
@@ -124,6 +126,9 @@ class MediaController extends Controller
 
         Announcement::whereNotNull('image')->get()
             ->each(fn (Announcement $announcement) => $add($announcement->image, "Ảnh thông báo \"{$announcement->title}\"", route('admin.announcements.edit', $announcement)));
+
+        Banner::all(['id', 'title', 'image'])
+            ->each(fn (Banner $banner) => $add($banner->image, "Banner \"{$banner->title}\"", route('admin.banners.edit', $banner)));
 
         // Editor images live inside HTML content, so look for their file name there.
         $editorFiles = $files->where('folder', 'editor');

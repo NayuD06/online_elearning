@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\CourseLevel;
 use App\Enums\CourseStatus;
+use App\Enums\UserRole;
+use App\Notifications\CourseSubmittedForReview;
 use Database\Factories\CourseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -124,6 +126,22 @@ class Course extends Model
     }
 
     /**
+     * @return HasMany<Certificate, $this>
+     */
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(Certificate::class);
+    }
+
+    /**
+     * @return HasMany<Order, $this>
+     */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /**
      * @return HasMany<Review, $this>
      */
     public function reviews(): HasMany
@@ -160,9 +178,32 @@ class Course extends Model
             ->when($filters['level'] ?? null, fn (Builder $query, string $level) => $query->where('level', $level));
     }
 
+    public const string RESUBMITTED_MESSAGE = 'Đã lưu thay đổi. Khoá học đã chuyển về "Chờ duyệt" để quản trị viên xem lại trước khi xuất bản tiếp.';
+
     public function isPublished(): bool
     {
         return $this->status === CourseStatus::Published;
+    }
+
+    /**
+     * An approved course whose content its instructor changed goes back to the admins, so nothing
+     * reaches learners without a review. Returns whether the course had to be sent back.
+     */
+    public function sendBackForReview(): bool
+    {
+        if (! $this->isPublished()) {
+            return false;
+        }
+
+        $this->update([
+            'status' => CourseStatus::Pending,
+            'rejection_reason' => null,
+            'submitted_at' => now(),
+        ]);
+
+        User::where('role', UserRole::Admin)->get()->each->notify(new CourseSubmittedForReview($this, resubmitted: true));
+
+        return true;
     }
 
     public function isFree(): bool

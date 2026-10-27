@@ -1,4 +1,4 @@
-<x-app-layout :title="$announcement->title">
+<x-app-layout :title="$announcement->title" :description="$announcement->content" :image="$announcement->image_url" og-type="article">
     <div class="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-3 lg:px-8">
         <article class="card overflow-hidden lg:col-span-2">
             @if ($announcement->image_url)

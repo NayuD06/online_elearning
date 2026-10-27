@@ -6,6 +6,7 @@ use App\Enums\CourseStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Course;
+use App\Models\Lesson;
 use App\Models\LessonAttachment;
 use App\Notifications\CourseApproved;
 use App\Notifications\CourseRejected;
@@ -105,6 +106,7 @@ class CourseController extends Controller
     {
         Storage::disk('media')->delete(array_filter([$course->thumbnail, ...$course->images->pluck('path')]));
         LessonAttachment::deleteFiles(LessonAttachment::whereIn('lesson_id', $course->lessons()->select('id'))->get());
+        Lesson::deleteVideos($course->lessons()->whereNotNull('video_path')->get(['id', 'video_path']));
         $course->delete();
 
         return back()->with('success', 'Đã xoá khoá học.');

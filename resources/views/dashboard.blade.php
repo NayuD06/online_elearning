@@ -67,9 +67,14 @@
                                     <span class="w-11 shrink-0 text-right text-sm font-semibold text-gray-700">{{ $course->progress }}%</span>
                                 </div>
                             </div>
-                            <a href="{{ route('learn.show', $course) }}" class="btn-primary w-full shrink-0 sm:w-28">
-                                {{ $course->progress === 0 ? 'Bắt đầu học' : ($course->progress === 100 ? 'Ôn tập' : 'Học tiếp') }}
-                            </a>
+                            <div class="flex w-full shrink-0 flex-col gap-2 sm:w-28">
+                                <a href="{{ route('learn.show', $course) }}" class="btn-primary w-full">
+                                    {{ $course->progress === 0 ? 'Bắt đầu học' : ($course->progress === 100 ? 'Ôn tập' : 'Học tiếp') }}
+                                </a>
+                                @if ($certificates->has($course->id))
+                                    <a href="{{ route('certificates.show', $certificates[$course->id]) }}" class="btn-secondary btn-sm w-full"><x-icon name="trophy" class="h-4 w-4" /> Chứng chỉ</a>
+                                @endif
+                            </div>
                         </div>
                     @empty
                         <x-empty-state icon="academic" title="Bạn chưa ghi danh khoá học nào">

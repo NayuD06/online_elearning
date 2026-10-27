@@ -92,6 +92,8 @@ mà không cần `npm run build` lại.
 
 Mật khẩu phải có ít nhất 6 ký tự, 1 chữ in hoa và 1 ký tự đặc biệt.
 
+> Các mật khẩu dưới đây chỉ dùng khi chạy **local**. Trên web thật, mật khẩu demo đặt bằng biến `DEMO_*_PASSWORD` (xem [deploy-render.md](deploy-render.md)).
+
 | Email | Mật khẩu | Vai trò |
 | --- | --- | --- |
 | `admin@example.com` | `Admin@123` | Quản trị viên, vào `/admin` để duyệt khoá học, quản lý người dùng, danh mục |

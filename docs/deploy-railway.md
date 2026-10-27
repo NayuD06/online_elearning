@@ -47,7 +47,7 @@ MAIL_MAILER=log
 Service web → **Settings** → **Networking** → **Generate Domain**. Sau đó bấm **Deploy**
 (hoặc Railway tự deploy lại khi đổi biến).
 
-Tài khoản demo sau khi seed: `admin@example.com` / `Admin@123`, `teacher@example.com` / `Teacher@123`, `student@example.com` / `Student@123`.
+Tài khoản demo sau khi seed: `admin@example.com` / `Admin@123`, `teacher@example.com` / `Teacher@123`, `student@example.com` / `Student@123` (chỉ khi chạy local; trên server đặt biến `DEMO_*_PASSWORD`, xem [deploy-render.md](deploy-render.md)).
 
 ## 5. (Tuỳ chọn) Giữ ảnh upload qua các lần deploy
 

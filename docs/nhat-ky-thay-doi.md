@@ -3,6 +3,109 @@
 Tài liệu này ghi lại các thay đổi Claude thực hiện trên nhánh `feature/demo`, theo thứ tự thời
 gian. Nhánh `main` không bị động đến.
 
+## 27/10/2026: chứng chỉ PDF, chuông thông báo, thanh toán VNPay/MoMo, SEO
+
+Hướng dẫn cấu hình và cách hoạt động: [thanh-toan.md](thanh-toan.md). Ca kiểm thử: mục 10–13 của
+[kich-ban-test.md](kich-ban-test.md). Ba migration mới chỉ **thêm** bảng (`notifications`,
+`certificates`, `orders`), dữ liệu cũ giữ nguyên.
+
+- **Chứng chỉ**: học xong mọi bài → cấp chứng chỉ có mã `UTH-XXXX-XXXX`, tải PDF (A4 ngang), trang
+  xác minh công khai `/chung-chi/{mã}` và `/xac-minh-chung-chi`, menu "Chứng chỉ của tôi", nút chứng
+  chỉ ở Góc học tập và trang học bài.
+- **Chuông thông báo**: chuông có số chưa đọc ở thanh trên (cả trang quản trị), trang
+  `/thong-bao-cua-toi`. Báo khi: khoá được duyệt / từ chối, có khoá chờ duyệt (admin), học viên mới,
+  câu hỏi mới, câu hỏi được trả lời, duyệt giảng viên, nhận chứng chỉ, thanh toán thành công.
+- **Thanh toán**: khoá trả phí phải mua qua VNPay hoặc MoMo (sandbox), kiểm tra chữ ký + số tiền, xử
+  lý cả URL trả về và IPN; lịch sử thanh toán cho học viên; menu **Đơn hàng** cho admin; khoá đã mua
+  không tự huỷ ghi danh được. `PAYMENT_DEMO=true` để chạy thử khi chưa có khoá.
+- **SEO**: meta description, Open Graph, canonical, ảnh chia sẻ mặc định, JSON-LD cho khoá học,
+  `noindex` cho trang riêng tư, `/sitemap.xml`, `robots.txt`.
+- `CourseFactory` mặc định giá 0 (thêm `->paid()`), vì khoá có giá giờ phải thanh toán.
+- Test mới: `CertificateTest`, `NotificationBellTest`, `PaymentTest`, `SeoTest`.
+
+## 27/10/2026: video bài học tải lên và banner trang chủ
+
+Làm trên nhánh `main`. Hai migration mới chỉ **thêm** cột/bảng (`lessons.video_path`, bảng
+`banners`), dữ liệu cũ giữ nguyên.
+
+**Video bài học**
+
+- Form bài học có mục **Video bài giảng**: tải lên MP4 (khuyên dùng) hoặc WebM, tối đa 100 MB (giới
+  hạn video của Cloudinary Free), hoặc dán link YouTube như cũ. Có cả hai thì trang học phát video
+  tải lên. Chọn file mới thay video cũ (file cũ bị xoá), có ô "Xoá video đã tải lên".
+- File lưu ở disk `media`: có `CLOUDINARY_URL` → Cloudinary (thư mục `online-elearning/lesson-videos`,
+  không mất khi Render deploy lại); không có → `storage/app/public/lesson-videos`. Tên file ngẫu nhiên
+  40 ký tự, chỉ hiện trong trang học (đã ghi danh hoặc bài học thử).
+- Trình duyệt chặn file > 100 MB ngay khi chọn, nút Lưu báo "Đang lưu..." trong lúc upload. Xoá bài
+  học / khoá học xoá luôn video. Dockerfile nâng giới hạn upload lên 110 MB (`post_max_size` 130 MB);
+  thêm trang lỗi 413 tiếng Việt khi gửi quá lớn.
+
+**Banner trang chủ** (Admin → **Banner trang chủ**, `/admin/banners`)
+
+- Thêm/sửa/xoá banner: ảnh ngang (JPG/PNG/WebP ≤ 4 MB, nên 1920×600), tiêu đề, mô tả, đường dẫn và
+  chữ trên nút, thứ tự, bật/tắt, thời gian hiện từ ... đến hết ... (để trống là luôn hiện).
+- Trang chủ hiện các banner đang chạy thành khung trượt trên cùng: tự chuyển 6 giây, nút ‹ ›, chấm
+  tròn, vuốt trên điện thoại, dừng khi rê chuột. Không có banner thì trang chủ như cũ.
+- Đường dẫn chỉ nhận trang trong web (`/...`) hoặc `http(s)://` (chặn `javascript:`); link ngoài mở
+  tab mới. Ảnh banner nằm ở thư mục `banners` và hiện trong **Ảnh đã lưu**.
+
+Test mới: `tests/Feature/LessonVideoTest.php`, `tests/Feature/BannerTest.php`. Kịch bản kiểm thử tay:
+mục 6.3 (VD-01 → VD-12) và 7.3 (BN-01 → BN-16) trong `docs/kich-ban-test.md`.
+
+## 27/10/2026: vá lỗi bảo mật (mật khẩu demo, chiếm tài khoản, giới hạn tần suất, duyệt lại, header)
+
+Theo báo cáo kiểm tra bảo mật ngày 27/10 (lỗi số 1, 3, 4, 5, 6).
+
+**Mật khẩu demo không mở được web thật**
+
+- Mật khẩu demo lấy từ `config/demo.php`: chạy local vẫn là `Admin@123`, `Teacher@123`,
+  `Student@123`; trên production lấy từ biến `DEMO_ADMIN_PASSWORD`, `DEMO_TEACHER_PASSWORD`,
+  `DEMO_STUDENT_PASSWORD`, không đặt thì ngẫu nhiên.
+- Lệnh mới `php artisan app:secure-demo-accounts`, chạy mỗi lần deploy (`docker/start.sh`): đổi mật
+  khẩu tài khoản demo theo các biến trên, hoặc sang mật khẩu ngẫu nhiên nếu tài khoản còn dùng mật
+  khẩu công khai. Chi tiết ở [deploy-render.md](deploy-render.md) mục 4. Đã thêm 3 biến vào `render.yaml`.
+
+**Chặn chiếm tài khoản trước qua đăng nhập Google**
+
+- Trước đây: khi tắt xác minh email, kẻ xấu đăng ký (hoặc đổi email hồ sơ) bằng email của người
+  khác; khi chủ thật đăng nhập Google, tài khoản được gộp nhưng mật khẩu của kẻ xấu vẫn dùng được.
+- Nay: đăng nhập Google vào tài khoản **chưa xác minh email** sẽ xoá mật khẩu cũ, huỷ cookie "ghi
+  nhớ", xoá mọi phiên đăng nhập khác của tài khoản và huỷ yêu cầu làm giảng viên đang chờ. Chủ tài
+  khoản đặt lại mật khẩu ở trang Hồ sơ nếu muốn.
+- Bật middleware `AuthenticateSession`: đổi hoặc đặt lại mật khẩu thì mọi phiên khác của tài khoản
+  bị đăng xuất.
+
+**Giới hạn tần suất** (`AppServiceProvider::configureRateLimiting`)
+
+| Chức năng | Giới hạn |
+| --- | --- |
+| Đăng ký | 20 lần/phút và 100 lần/giờ mỗi IP |
+| Quên mật khẩu (gửi email) | 5 lần/phút và 20 lần/giờ mỗi IP, 3 lần/giờ mỗi email |
+| Đặt lại mật khẩu | 10 lần/phút mỗi IP |
+| Ghi danh, đánh giá, yêu thích, hỏi đáp, xin làm giảng viên | 20 lần/phút và 200 lần/giờ mỗi người |
+| Upload ảnh trong trình soạn thảo | 30 lần/phút mỗi người |
+
+Vượt giới hạn ở form đăng ký/quên mật khẩu thì quay lại form kèm thông báo; ở các chức năng khác thì
+hiện trang lỗi 429.
+
+**Sửa khoá học đã duyệt phải duyệt lại**
+
+- Giảng viên sửa thông tin khoá học đang xuất bản, hoặc thêm/sửa/xoá bài học, tài liệu của nó →
+  khoá học chuyển về **Chờ duyệt** (tạm ẩn khỏi danh sách, học viên đã ghi danh vẫn học được) cho
+  đến khi admin duyệt lại. Bấm Lưu mà không đổi gì thì giữ nguyên trạng thái.
+- Trang sửa khoá học, bài học và trang Chương & bài học hiện cảnh báo khi khoá học đang xuất bản.
+- Chưa áp dụng cho chương và bài kiểm tra (ít rủi ro hơn).
+
+**Header bảo mật** (`app/Http/Middleware/AddSecurityHeaders.php`, mọi phản hồi)
+
+- `X-Frame-Options: SAMEORIGIN` và CSP `frame-ancestors 'self'`: trang web khác không nhúng được
+  trang của mình vào iframe để lừa bấm nút (clickjacking).
+- `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`, và HSTS (khi truy cập
+  qua HTTPS: trình duyệt luôn dùng HTTPS trong 1 năm).
+- CSP chỉ có các luật không làm hỏng trang (không chặn script, style, YouTube, Cloudinary).
+
+Test: `tests/Feature/SecurityHardeningTest.php`.
+
 ## 27/10/2026: giảng viên chờ duyệt, khoá tài khoản, hỏi đáp, tài liệu, yêu thích, trang lỗi
 
 Làm trên nhánh `main`. Bốn migration mới chỉ **thêm** cột/bảng, dữ liệu đang có trên Aiven giữ

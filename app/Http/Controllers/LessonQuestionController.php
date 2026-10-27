@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\LessonQuestion;
 use App\Notifications\LessonQuestionAnswered;
+use App\Notifications\NewLessonQuestion;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -27,6 +28,11 @@ class LessonQuestionController extends Controller
             'user_id' => $request->user()->id,
             'body' => $validated['body'],
         ]);
+
+        $instructor = $course->instructor;
+        if ($instructor && $instructor->id !== $request->user()->id) {
+            $instructor->notify(new NewLessonQuestion($question));
+        }
 
         return redirect()->to(route('learn.show', [$course, $lesson]).'#hoi-dap-'.$question->id)
             ->with('success', 'Đã gửi câu hỏi. Giảng viên sẽ trả lời sớm.');

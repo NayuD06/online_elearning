@@ -18,7 +18,8 @@ class LessonQuestionAnswered extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        // Saved for the bell first, so it is kept even when the email fails.
+        return ['database', 'mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -30,5 +31,20 @@ class LessonQuestionAnswered extends Notification
             ->greeting("Xin chào {$notifiable->name},")
             ->line("Câu hỏi của bạn trong bài \"{$lesson->title}\" vừa được trả lời.")
             ->action('Xem câu trả lời', route('learn.show', [$lesson->course, $lesson]).'#hoi-dap-'.$this->question->id);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function toArray(object $notifiable): array
+    {
+        $lesson = $this->question->lesson;
+
+        return [
+            'icon' => 'chat',
+            'title' => 'Câu hỏi của bạn đã có trả lời',
+            'body' => "Bài \"{$lesson->title}\" trong khoá {$lesson->course->title}.",
+            'url' => route('learn.show', [$lesson->course, $lesson]).'#hoi-dap-'.$this->question->id,
+        ];
     }
 }

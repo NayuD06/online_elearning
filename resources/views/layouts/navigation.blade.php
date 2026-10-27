@@ -56,6 +56,7 @@
 
             <div class="hidden items-center gap-2 lg:flex">
                 @auth
+                    <x-notification-bell />
                     <x-dropdown align="right" width="w-56">
                         <x-slot name="trigger">
                             <button class="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm font-medium hover:bg-white/10">
@@ -75,6 +76,8 @@
                             @endif
                             <x-dropdown-link :href="route('dashboard')">Góc học tập</x-dropdown-link>
                             <x-dropdown-link :href="route('wishlist.index')">Khoá học yêu thích</x-dropdown-link>
+                            <x-dropdown-link :href="route('certificates.index')">Chứng chỉ của tôi</x-dropdown-link>
+                            <x-dropdown-link :href="route('orders.index')">Lịch sử thanh toán</x-dropdown-link>
                             <x-dropdown-link :href="route('profile.edit')">Hồ sơ cá nhân</x-dropdown-link>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
@@ -90,10 +93,15 @@
                 @endauth
             </div>
 
-            <button @click="open = ! open" class="rounded-lg p-2 hover:bg-white/10 lg:hidden" aria-label="Mở menu">
-                <x-icon name="menu" class="h-6 w-6" x-show="! open" />
-                <x-icon name="x" class="h-6 w-6" x-show="open" x-cloak />
-            </button>
+            <div class="flex items-center gap-1 lg:hidden">
+                @auth
+                    <x-notification-bell />
+                @endauth
+                <button @click="open = ! open" class="rounded-lg p-2 hover:bg-white/10" aria-label="Mở menu">
+                    <x-icon name="menu" class="h-6 w-6" x-show="! open" />
+                    <x-icon name="x" class="h-6 w-6" x-show="open" x-cloak />
+                </button>
+            </div>
         </div>
 
         {{-- Mobile menu --}}
@@ -123,6 +131,8 @@
                             <a href="{{ route(Auth::user()->managementRoute()) }}" class="block rounded-lg px-3 py-2 text-sm hover:bg-white/10">{{ Auth::user()->isAdmin() ? 'Trang quản trị' : 'Kênh giảng viên' }}</a>
                         @endif
                         <a href="{{ route('wishlist.index') }}" class="block rounded-lg px-3 py-2 text-sm hover:bg-white/10">Khoá học yêu thích</a>
+                        <a href="{{ route('certificates.index') }}" class="block rounded-lg px-3 py-2 text-sm hover:bg-white/10">Chứng chỉ của tôi</a>
+                        <a href="{{ route('orders.index') }}" class="block rounded-lg px-3 py-2 text-sm hover:bg-white/10">Lịch sử thanh toán</a>
                         <a href="{{ route('profile.edit') }}" class="block rounded-lg px-3 py-2 text-sm hover:bg-white/10">Hồ sơ cá nhân</a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

@@ -1,4 +1,4 @@
-<x-app-layout :title="'Giảng viên '.$instructor->name">
+<x-app-layout :title="'Giảng viên '.$instructor->name" :description="$instructor->bio ?: 'Các khoá học của giảng viên '.$instructor->name.' trên UTH E-Learning.'" :image="$instructor->avatar_url">
     <section class="bg-gradient-to-br from-brand-800 to-brand-600 text-white">
         <div class="mx-auto flex max-w-7xl flex-col items-center gap-6 px-4 py-10 text-center sm:flex-row sm:text-left sm:px-6 lg:px-8">
             <img src="{{ $instructor->avatar_url }}" alt="" class="h-28 w-28 shrink-0 rounded-full border-4 border-white/60 object-cover shadow-lg">

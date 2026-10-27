@@ -17,7 +17,8 @@ class InstructorRequestReviewed extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        // Saved for the bell first, so it is kept even when the email fails.
+        return ['database', 'mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -35,5 +36,23 @@ class InstructorRequestReviewed extends Notification
             ->subject('Bạn đã trở thành giảng viên')
             ->line('Quản trị viên đã duyệt yêu cầu làm giảng viên của bạn. Từ giờ bạn có thể tạo khoá học và gửi duyệt.')
             ->action('Vào kênh giảng viên', route('instructor.dashboard'));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function toArray(object $notifiable): array
+    {
+        return $this->approved ? [
+            'icon' => 'academic',
+            'title' => 'Bạn đã trở thành giảng viên',
+            'body' => 'Từ giờ bạn có thể tạo khoá học và gửi duyệt.',
+            'url' => route('instructor.dashboard'),
+        ] : [
+            'icon' => 'x',
+            'title' => 'Yêu cầu làm giảng viên chưa được chấp nhận',
+            'body' => 'Bạn có thể cập nhật hồ sơ rồi gửi lại yêu cầu.',
+            'url' => route('profile.edit'),
+        ];
     }
 }
