@@ -48,12 +48,12 @@ services:
         value: public
       - key: LOG_CHANNEL
         value: stderr
-      # Ảnh upload lưu trên Cloudinary, email gửi qua Resend: xem docs/luu-anh-va-gui-email.md
+      # Ảnh upload lưu trên Cloudinary, email gửi qua Brevo: xem docs/luu-anh-va-gui-email.md
       - key: CLOUDINARY_URL
         sync: false
       - key: MAIL_MAILER
         sync: false
-      - key: RESEND_API_KEY
+      - key: BREVO_API_KEY
         sync: false
       - key: MAIL_FROM_ADDRESS
         sync: false

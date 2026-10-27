@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 class RegisteredUserController extends Controller
 {
@@ -42,10 +43,19 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        event(new Registered($user));
+        $mailFailed = false;
+
+        try {
+            event(new Registered($user));
+        } catch (Throwable $e) {
+            // The account exists; the verification email can be resent later.
+            report($e);
+            $mailFailed = true;
+        }
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('dashboard', absolute: false))
+            ->with($mailFailed ? ['error' => 'Tài khoản đã được tạo nhưng chưa gửi được email xác minh. Bạn có thể bấm gửi lại sau ít phút.'] : []);
     }
 }

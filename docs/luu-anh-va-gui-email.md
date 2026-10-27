@@ -14,16 +14,8 @@ Hai việc này giúp web chạy như một trang thật:
 
 | Chạy ở đâu | Dùng | Ghi chú |
 |---|---|---|
-| Máy của bạn | **Gmail** (`MAIL_MAILER=smtp`) | Gửi được tới mọi email, chỉ cần mật khẩu ứng dụng của Gmail (mục 2) |
-| Render Free | **Resend** (`MAIL_MAILER=resend`) | Render Free **chặn cổng SMTP** (25, 465, 587) nên Gmail không gửi được từ Render. Resend gửi qua HTTPS (mục 3) |
-
-**Giới hạn của Resend khi chưa có tên miền riêng:** chỉ gửi được từ `onboarding@resend.dev` và
-**chỉ tới đúng email bạn dùng đăng ký Resend**. Đủ để tự demo (quên mật khẩu, duyệt khoá học với
-tài khoản mang email của bạn), nhưng người khác sẽ không nhận được mail. Muốn gửi cho mọi người thì
-cần một tên miền riêng (mục 3.4), hoặc nâng Render lên gói trả phí (gói trả phí mở cổng SMTP, dùng
-Gmail như ở máy).
-
----
+| Máy của bạn | **Gmail** (`MAIL_MAILER=smtp`) | Chỉ cần mật khẩu ứng dụng của Gmail (mục 2) |
+| Render Free | **Brevo** (`MAIL_MAILER=brevo`) | Render Free **chặn cổng SMTP** (25, 465, 587) nên Gmail không gửi được từ Render. Brevo gửi qua HTTPS, người gửi là Gmail của bạn, gửi được tới mọi email, không cần tên miền (mục 3) |
 
 ## 1. Cloudinary: lấy `CLOUDINARY_URL`
 
@@ -71,43 +63,49 @@ tải nhanh hơn.
 Nếu báo lỗi `Username and Password not accepted`: kiểm tra lại mật khẩu ứng dụng (16 ký tự, không
 có dấu cách) và chắc chắn đã bật xác minh 2 bước. Gmail cho gửi khoảng 500 email/ngày.
 
-## 3. Resend: gửi mail từ Render
+## 3. Brevo: gửi mail từ Render
 
-1. Đăng ký tại https://resend.com/signup (đăng nhập bằng Google hoặc GitHub được). Gói Free gửi
-   3.000 email/tháng, tối đa 100 email/ngày.
-2. **Tạo API key**: menu bên trái **API Keys** → **Create API Key** → tên `render`, quyền
-   **Sending access** → **Add** → copy chuỗi `re_...` (chỉ hiện một lần). Đây là **bí mật**.
-3. Chưa có tên miền thì dùng người gửi `onboarding@resend.dev`. Mail chỉ tới được email bạn dùng
-   đăng ký Resend, nên khi demo hãy đổi email của tài khoản giảng viên/học viên demo thành email đó
-   (ở trang **Hồ sơ**).
-4. **(Không bắt buộc) Gửi cho mọi người**: cần một tên miền của riêng bạn (mua ở nhà cung cấp tên
-   miền bất kỳ). Trong Resend → **Domains** → **Add Domain** → nhập tên miền → Resend đưa ra vài
-   bản ghi DNS (MX, TXT) → thêm các bản ghi đó ở trang quản lý DNS của tên miền → quay lại bấm
-   **Verify**. Khi trạng thái là **Verified**, đổi `MAIL_FROM_ADDRESS` thành
-   `no-reply@<tên-miền-của-bạn>`.
+1. Đăng ký tại https://www.brevo.com → **Sign up free** (đăng nhập bằng Google được). Gói Free gửi
+   300 email/ngày. Phần thông tin công ty có thể ghi tên đồ án, website ghi địa chỉ Render.
+2. **Xác minh email người gửi**: góc phải trên bấm tên tài khoản → **Senders, Domains & Dedicated IPs**
+   → tab **Senders** → **Add sender**:
+   - **From name**: `UTH E-Learning`
+   - **From email**: Gmail của bạn (cùng Gmail dùng ở máy cũng được)
 
-Lịch sử gửi xem ở Resend → **Emails** (ghi rõ đã gửi, bị từ chối và lý do).
+   Brevo gửi mã xác nhận tới Gmail đó; nhập mã để xác minh. Chỉ email đã xác minh mới được làm
+   người gửi.
+3. **Tạo API key**: góc phải trên bấm tên tài khoản → **SMTP & API** → tab **API Keys** →
+   **Generate a new API key** → đặt tên `render` → copy chuỗi `xkeysib-...` (chỉ hiện một lần).
+   Đây là **bí mật**. Lưu ý: dùng **API key** (`xkeysib-`), không phải SMTP key (`xsmtpsib-`).
+4. **Tắt chặn IP lạ**: Render không có IP cố định, mà Brevo mặc định chặn API key khi gọi từ IP lạ.
+   Mở https://app.brevo.com/security/authorised_ips (tên tài khoản → **Security** →
+   **Authorized IPs**) → tắt chặn IP (**Deactivate blocking**).
+5. Tài khoản Brevo mới đôi khi cần vài giờ để được duyệt gửi mail giao dịch. Nếu mail chưa tới,
+   xem **Transactional** → **Logs** hoặc email từ Brevo.
+
+Mail gửi từ địa chỉ `@gmail.com` qua Brevo đôi khi vào mục **Spam/Thư rác**: nhắc người nhận kiểm
+tra Spam, hoặc bấm "Không phải thư rác" một lần.
 
 ## 4. Biến môi trường trên Render
 
-Vào https://dashboard.render.com → service `online-elearning` → **Environment** → **Edit** →
-thêm hoặc sửa:
+Vào https://dashboard.render.com → service `online-elearning` → **Environment** → **Edit**:
+
+**Thêm hoặc sửa:**
 
 | Biến | Giá trị |
 |---|---|
 | `CLOUDINARY_URL` | Chuỗi `cloudinary://...` ở mục 1 (bỏ phần `CLOUDINARY_URL=` phía trước) |
-| `MAIL_MAILER` | `resend` |
-| `RESEND_API_KEY` | Chuỗi `re_...` ở mục 3.2 |
-| `MAIL_FROM_ADDRESS` | `onboarding@resend.dev` (hoặc `no-reply@<tên-miền>` nếu đã xác minh tên miền) |
+| `MAIL_MAILER` | `brevo` |
+| `BREVO_API_KEY` | Chuỗi `xkeysib-...` ở mục 3.3 |
+| `MAIL_FROM_ADDRESS` | Gmail đã xác minh ở mục 3.2 |
 | `MAIL_FROM_NAME` | `UTH E-Learning` |
-| `AUTH_VERIFY_EMAIL` | `false` khi chưa có tên miền; `true` khi đã xác minh tên miền |
+| `AUTH_VERIFY_EMAIL` | `true` khi đã thử gửi mail thành công (để `false` trong lúc thử) |
 | `CLOUDINARY_FOLDER` | (không bắt buộc) mặc định `online-elearning` |
 
-Không cần sửa `FILESYSTEM_DISK`. Bấm **Save, rebuild, and deploy**.
+**Xoá** (nếu có): `RESEND_API_KEY`, và các biến SMTP `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`,
+`MAIL_PASSWORD` (Render không dùng tới, và không nên để mật khẩu Gmail trên Render).
 
-Chỉ bật `AUTH_VERIFY_EMAIL=true` khi mail gửi được tới **mọi** email (đã xác minh tên miền ở
-Resend). Nếu bật sớm, người khác đăng ký sẽ không nhận được link xác minh và bị kẹt ở trang
-"Vui lòng xác minh email".
+Không cần sửa `FILESYSTEM_DISK`. Bấm **Save, rebuild, and deploy**.
 
 ## 5. Kiểm tra sau khi deploy
 
@@ -115,8 +113,8 @@ Resend). Nếu bật sớm, người khác đăng ký sẽ không nhận đượ
    phải vào ảnh → **Mở ảnh trong thẻ mới**: địa chỉ phải bắt đầu bằng `https://res.cloudinary.com/`.
    Deploy lại lần nữa, ảnh vẫn còn. Trang admin **Ảnh đã lưu** (`/admin/media`) cho biết ảnh đang
    lưu ở Cloudinary hay trong máy, và liệt kê mọi ảnh kèm nơi đang dùng.
-2. **Quên mật khẩu**: đăng xuất → **Quên mật khẩu?** → nhập email của bạn (email đăng ký Resend,
-   và đã là email của một tài khoản trên web) → mở hộp thư, bấm link, đặt mật khẩu mới.
+2. **Quên mật khẩu**: đăng xuất → **Quên mật khẩu?** → nhập một email có thật (đã có tài khoản
+   trên web) → mở hộp thư (cả mục Spam), bấm link, đặt mật khẩu mới.
 3. **Xác minh email** (chỉ khi đã bật `AUTH_VERIFY_EMAIL=true`): đăng ký tài khoản mới bằng email
    thật → web chuyển sang trang yêu cầu xác minh → bấm link trong email → vào được trang học.
 4. **Duyệt khoá học**: đăng nhập giảng viên (đổi email giảng viên thành email thật của bạn ở
@@ -128,10 +126,10 @@ Resend). Nếu bật sớm, người khác đăng ký sẽ không nhận đượ
 - Ảnh upload **trước khi** bật Cloudinary nằm trên ổ đĩa cũ của Render và đã bị mất, chỉ cần upload
   lại. Dữ liệu demo seed sẵn không dùng ảnh upload nên không bị ảnh hưởng.
 - Tài khoản tạo bằng Google, tài khoản demo và tài khoản do admin tạo được coi là đã xác minh email.
-- Nếu gửi mail lỗi khi admin duyệt/từ chối khoá học, việc duyệt vẫn được lưu, lỗi ghi vào **Logs**
-  của Render. Riêng trang quên mật khẩu và đăng ký sẽ báo lỗi 500 nếu không gửi được mail (vd.
-  Resend chưa có tên miền mà gửi tới email khác): kiểm tra `RESEND_API_KEY`, `MAIL_FROM_ADDRESS`
-  và mục **Emails** trên Resend.
+- Nếu gửi mail lỗi, web không báo lỗi 500 nữa: trang quên mật khẩu hiện "Chưa gửi được email...",
+  đăng ký vẫn tạo được tài khoản, duyệt khoá học vẫn được lưu. Lỗi chi tiết ghi trong **Logs** của
+  Render: kiểm tra `BREVO_API_KEY`, `MAIL_FROM_ADDRESS` (phải là email đã xác minh ở Brevo) và mục
+  **Authorized IPs**.
 - Video bài học hiện vẫn dùng link YouTube. Cloudinary lưu được cả video (Free giới hạn 100 MB mỗi
   file) nếu sau này thêm chức năng upload video.
 

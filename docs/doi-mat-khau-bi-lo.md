@@ -98,8 +98,8 @@ Web này không lưu cột nào được mã hoá bằng `APP_KEY` trong databas
 - Không dán mật khẩu, secret, `APP_KEY`, API key vào chat, ảnh chụp màn hình, tài liệu nộp bài hay
   commit lên GitHub. Khi cần hỏi, thay giá trị bằng `***`.
 - Chỉ lưu bí mật ở 2 nơi: file `.env` trên máy (không commit) và mục **Environment** trên Render.
-- Các key mới thêm cho Cloudinary (`CLOUDINARY_URL`), Resend (`RESEND_API_KEY`) và mật khẩu ứng dụng
+- Các key mới thêm cho Cloudinary (`CLOUDINARY_URL`), Brevo (`BREVO_API_KEY`) và mật khẩu ứng dụng
   Gmail (`MAIL_PASSWORD`) cũng là bí mật,
   làm theo cùng quy tắc. Nếu lỡ lộ: Cloudinary → **Settings** → **API Keys** → tạo key mới rồi xoá
-  key cũ; Resend → **API Keys** → xoá key cũ, tạo key mới; Gmail → https://myaccount.google.com/apppasswords
+  key cũ; Brevo → **SMTP & API** → **API Keys** → xoá key cũ, tạo key mới; Gmail → https://myaccount.google.com/apppasswords
   → xoá mật khẩu ứng dụng cũ, tạo cái mới.

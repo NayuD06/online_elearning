@@ -20,8 +20,9 @@ gian. Nhánh `main` không bị động đến.
 - Ảnh upload (avatar, ảnh bìa và ảnh khoá học, ảnh trong CKEditor, ảnh thông báo) lưu qua disk mới
   `media`. Có `CLOUDINARY_URL` → lưu trên Cloudinary (không mất khi Render deploy lại); không có →
   lưu trong `storage/app/public` như trước. Thêm gói `cloudinary/cloudinary_php`.
-- Gửi email: ở máy dùng Gmail SMTP (mật khẩu ứng dụng); trên Render dùng Resend
-  (`MAIL_MAILER=resend`, `RESEND_API_KEY`) vì Render Free chặn cổng SMTP. Thêm gói `resend/resend-php`.
+- Gửi email: ở máy dùng Gmail SMTP (mật khẩu ứng dụng); trên Render dùng Brevo
+  (`MAIL_MAILER=brevo`, `BREVO_API_KEY`) vì Render Free chặn cổng SMTP. Thêm gói
+  `symfony/brevo-mailer`, `symfony/http-client`. Gửi mail lỗi thì hiện thông báo thay vì trang lỗi 500.
 - Giảng viên nhận email khi khoá học được duyệt hoặc bị từ chối (kèm lý do). Mail lỗi thì việc
   duyệt vẫn được lưu.
 - Bật xác minh email khi đăng ký bằng biến `AUTH_VERIFY_EMAIL=true` (mặc định tắt, ở máy không cần
