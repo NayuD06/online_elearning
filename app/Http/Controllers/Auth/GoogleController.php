@@ -76,6 +76,10 @@ class GoogleController extends Controller
             }
         }
 
+        if ($user?->isLocked()) {
+            return redirect()->route('login')->withErrors(['email' => User::LOCKED_MESSAGE]);
+        }
+
         if ($user) {
             // Link an existing account (e.g. registered with email + password) to Google; keep its role.
             $user->forceFill([

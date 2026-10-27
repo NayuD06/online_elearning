@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureAccountIsNotLocked;
 use App\Http\Middleware\EnsureUserHasRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Railway (và các nền tảng tương tự) chạy app sau proxy HTTPS
         $middleware->trustProxies(at: '*');
+
+        // Sign out accounts an admin locked while they were signed in.
+        $middleware->web(append: [EnsureAccountIsNotLocked::class]);
 
         $middleware->alias([
             'role' => EnsureUserHasRole::class,

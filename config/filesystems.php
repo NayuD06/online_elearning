@@ -65,6 +65,23 @@ return [
             'report' => false,
         ],
 
+        // Lesson documents (PDF, slides...). Only enrolled learners may download them, so the files
+        // never sit in a public folder: Cloudinary hands out short-lived signed download links,
+        // and without Cloudinary they stay in the private storage/app/private/attachments folder.
+        'attachments' => str_starts_with((string) env('CLOUDINARY_URL'), 'cloudinary://') ? [
+            'driver' => 'cloudinary',
+            'url' => env('CLOUDINARY_URL'),
+            'folder' => trim(env('CLOUDINARY_FOLDER', 'online-elearning').'/attachments', '/'),
+            'type' => 'private',
+            'throw' => true,
+            'report' => false,
+        ] : [
+            'driver' => 'local',
+            'root' => storage_path('app/private/attachments'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

@@ -17,13 +17,13 @@ use Tests\TestCase;
 
 class CloudinaryStorageTest extends TestCase
 {
-    private function disk(UploadApi $uploadApi, ?AdminApi $adminApi = null): FilesystemAdapter
+    private function disk(UploadApi $uploadApi, ?AdminApi $adminApi = null, string $type = 'upload'): FilesystemAdapter
     {
         $cloudinary = Mockery::mock(Cloudinary::class, ['cloudinary://key:secret@demo-cloud'])->makePartial();
         $cloudinary->shouldReceive('uploadApi')->andReturn($uploadApi);
         $cloudinary->shouldReceive('adminApi')->andReturn($adminApi ?? Mockery::mock(AdminApi::class));
 
-        $adapter = new CloudinaryAdapter($cloudinary, 'online-elearning');
+        $adapter = new CloudinaryAdapter($cloudinary, 'online-elearning', $type);
 
         return new FilesystemAdapter(new Filesystem($adapter), $adapter, ['throw' => true]);
     }
@@ -75,11 +75,39 @@ class CloudinaryStorageTest extends TestCase
         $this->assertSame('https://res.cloudinary.com/demo-cloud/image/upload/online-elearning/logo.svg', $disk->url('logo.svg'));
     }
 
+    public function test_private_files_are_uploaded_as_private_raw_assets(): void
+    {
+        $uploadApi = Mockery::mock(UploadApi::class);
+        $uploadApi->shouldReceive('upload')->once()->withArgs(fn ($file, array $options) => $options['public_id'] === 'online-elearning/attachments/lesson-1/slides.pdf'
+            && $options['resource_type'] === 'raw'
+            && $options['type'] === 'private');
+
+        $this->disk($uploadApi, type: 'private')->put('attachments/lesson-1/slides.pdf', '%PDF');
+    }
+
+    public function test_private_files_are_only_reachable_through_signed_download_links(): void
+    {
+        $uploadApi = Mockery::mock(UploadApi::class);
+        $uploadApi->shouldReceive('privateDownloadUrl')->once()
+            ->withArgs(fn (string $publicId, string $format, array $options) => $publicId === 'online-elearning/lesson-1/slides.pdf'
+                && $format === ''
+                && $options['resource_type'] === 'raw'
+                && $options['type'] === 'private'
+                && $options['expires_at'] > time())
+            ->andReturn('https://api.cloudinary.com/v1_1/demo-cloud/raw/download?signature=abc');
+
+        $disk = $this->disk($uploadApi, type: 'private');
+
+        $this->assertTrue($disk->providesTemporaryUrls());
+        $this->assertSame('https://api.cloudinary.com/v1_1/demo-cloud/raw/download?signature=abc', $disk->temporaryUrl('lesson-1/slides.pdf', now()->addMinutes(5)));
+    }
+
     public function test_delete_destroys_the_asset(): void
     {
         $uploadApi = Mockery::mock(UploadApi::class);
         $uploadApi->shouldReceive('destroy')->once()->with('online-elearning/courses/1/gallery/a', [
             'resource_type' => 'image',
+            'type' => 'upload',
             'invalidate' => true,
         ]);
 

@@ -35,6 +35,11 @@ Chỉ cần một biến này, và giá trị phải bắt đầu bằng `cloudi
 Secret), web bỏ qua và vẫn lưu ảnh trong máy. Web tự lưu ảnh vào thư mục `online-elearning/` trên Cloudinary (đổi tên thư
 mục bằng biến `CLOUDINARY_FOLDER` nếu muốn), mở **Media Library** trên Cloudinary để xem.
 
+Tài liệu đính kèm bài học (PDF, slide...) cũng lên Cloudinary, ở thư mục
+`online-elearning/attachments` với loại **private**: không có link công khai, web tự tạo link tải
+có chữ ký và hết hạn sau 5 phút cho người có quyền. Không có `CLOUDINARY_URL` thì tài liệu nằm ở
+`storage/app/private/attachments` (không mở được qua `/storage`).
+
 Ảnh được Cloudinary tự nén và đổi sang định dạng nhẹ nhất trình duyệt hỗ trợ (WebP/AVIF), nên trang
 tải nhanh hơn.
 

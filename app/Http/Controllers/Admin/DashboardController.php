@@ -32,6 +32,7 @@ class DashboardController extends Controller
                 'enrollments' => (clone $enrollmentQuery)->count(),
                 'reviews' => Review::count(),
                 'pending' => Course::where('status', CourseStatus::Pending)->count(),
+                'pendingInstructors' => User::where('instructor_status', 'pending')->count(),
             ],
             'enrollmentChart' => [
                 'labels' => $months->map(fn ($month) => 'T'.$month->format('m/Y'))->all(),

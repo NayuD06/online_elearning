@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Instructor;
 
+use App\Models\LessonAttachment;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,6 +24,13 @@ class LessonRequest extends FormRequest
             'duration_minutes' => ['required', 'integer', 'min:0', 'max:1000'],
             'position' => ['nullable', 'integer', 'min:0'],
             'is_preview' => ['boolean'],
+            'attachments' => ['nullable', 'array', 'max:10'],
+            'attachments.*' => [
+                'file',
+                'extensions:'.implode(',', LessonAttachment::EXTENSIONS),
+                'mimes:'.implode(',', LessonAttachment::EXTENSIONS),
+                'max:'.LessonAttachment::MAX_KILOBYTES,
+            ],
         ];
     }
 
@@ -38,6 +46,8 @@ class LessonRequest extends FormRequest
             'video_url' => 'đường dẫn video',
             'duration_minutes' => 'thời lượng',
             'position' => 'thứ tự',
+            'attachments' => 'tài liệu đính kèm',
+            'attachments.*' => 'tài liệu đính kèm',
         ];
     }
 

@@ -3,6 +3,56 @@
 Tài liệu này ghi lại các thay đổi Claude thực hiện trên nhánh `feature/demo`, theo thứ tự thời
 gian. Nhánh `main` không bị động đến.
 
+## 27/10/2026: giảng viên chờ duyệt, khoá tài khoản, hỏi đáp, tài liệu, yêu thích, trang lỗi
+
+Làm trên nhánh `main`. Bốn migration mới chỉ **thêm** cột/bảng, dữ liệu đang có trên Aiven giữ
+nguyên; Render tự chạy `migrate` khi deploy.
+
+**Đăng ký giảng viên và khoá tài khoản**
+
+- Trang đăng ký có lựa chọn **Học viên / Giảng viên**. Chọn Giảng viên → tài khoản vẫn là học viên
+  và có yêu cầu "chờ duyệt". Học viên (kể cả tài khoản Google) gửi yêu cầu ở trang Hồ sơ.
+- Admin → Người dùng: lọc "Chờ duyệt giảng viên", nút Duyệt / Từ chối (gửi email kết quả, mail lỗi
+  vẫn lưu). Bảng điều khiển admin báo số yêu cầu đang chờ.
+- Nút khoá / mở khoá tài khoản. Tài khoản bị khoá không đăng nhập được bằng mật khẩu hay Google, và
+  đang đăng nhập thì bị đăng xuất ở lần tải trang kế tiếp. Admin không tự khoá mình được.
+- Cột mới ở `users`: `instructor_status`, `instructor_requested_at`, `locked_at`.
+
+**Hỏi đáp dưới bài học** (bảng `lesson_questions`)
+
+- Học viên đã ghi danh đặt câu hỏi dưới bài học; giảng viên phụ trách hoặc admin trả lời (ngay ở
+  trang học hoặc ở mục **Hỏi đáp** mới trong `/instructor` và `/admin`, mặc định lọc câu chưa trả
+  lời). Người hỏi nhận email khi có trả lời. Người hỏi xoá được câu của mình, giảng viên/admin xoá
+  được mọi câu.
+
+**Tài liệu đính kèm bài học** (bảng `lesson_attachments`)
+
+- Form bài học có mục Tài liệu đính kèm: PDF, Word, PowerPoint, Excel, TXT, ZIP; tối đa 10 tệp mỗi
+  lần, 10 MB mỗi tệp (giới hạn file của Cloudinary Free).
+- Lưu ở disk mới `attachments`: có `CLOUDINARY_URL` → Cloudinary loại **private** (thư mục
+  `online-elearning/attachments`, không có link công khai); không có → `storage/app/private/attachments`.
+- Chỉ học viên đã ghi danh, giảng viên phụ trách và admin tải được (route
+  `/hoc/{khoá}/{bài}/tai-lieu/{id}`), file tải về giữ tên gốc. Xoá bài học / khoá học xoá luôn file.
+
+**Khoá học yêu thích** (bảng `wishlists`): nút ở chi tiết khoá học, trang `/khoa-hoc-yeu-thich`
+(menu tài khoản).
+
+**Hồ sơ giảng viên** `/giang-vien/{id}`: giới thiệu, số khoá học, số học viên, điểm đánh giá, các
+khoá đã xuất bản. Tên giảng viên ở chi tiết khoá học dẫn tới trang này.
+
+**Trang lỗi riêng** 403, 404, 419, 429, 500, 503 bằng tiếng Việt.
+
+**Khác**
+
+- Dữ liệu mẫu (chỉ khi seed database trống hoặc `RESEED_DATABASE=true`): tài khoản
+  `giangvien.moi@example.com` / `Teacher@123` đang chờ duyệt giảng viên, câu hỏi mẫu ở bài 1 khoá
+  "Laravel 13 cho người mới bắt đầu", một khoá yêu thích của `student@example.com`.
+- Kịch bản kiểm thử thủ công toàn bộ chức năng: [kich-ban-test.md](kich-ban-test.md).
+- Thêm 33 test tự động (tổng 129 test, đều qua). Đã thử migrate trên MariaDB với database cũ đã có
+  dữ liệu.
+
+Cần chạy `php artisan migrate` và `npm run build` (có class CSS mới). Không thêm gói mới.
+
 ## 26/10/2026: rà soát bảo mật trước khi push
 
 - Lịch sử git và các file sắp commit không chứa mật khẩu/khoá thật. `.gitignore` chặn thêm `.env.*`

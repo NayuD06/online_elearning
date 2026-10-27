@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Instructor\CourseRequest;
 use App\Models\Category;
 use App\Models\Course;
+use App\Models\LessonAttachment;
 use App\Support\UniqueSlug;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -137,6 +138,7 @@ class CourseController extends Controller
         Gate::authorize('manage', $course);
 
         Storage::disk('media')->delete(array_filter([$course->thumbnail, ...$course->images->pluck('path')]));
+        LessonAttachment::deleteFiles(LessonAttachment::whereIn('lesson_id', $course->lessons()->select('id'))->get());
         $course->delete();
 
         return to_route('instructor.courses.index')->with('success', 'Đã xoá khoá học.');

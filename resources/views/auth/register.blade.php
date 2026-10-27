@@ -21,6 +21,23 @@
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
+        <!-- Account type: teachers are approved by an admin -->
+        <fieldset class="mt-4">
+            <legend class="text-sm font-medium text-gray-700">Bạn muốn tham gia với vai trò</legend>
+            <div class="mt-2 grid grid-cols-2 gap-3">
+                @foreach (['student' => ['academic', 'Học viên', 'Ghi danh và học ngay'], 'teacher' => ['users', 'Giảng viên', 'Cần quản trị viên duyệt']] as $value => [$icon, $label, $hint])
+                    <label class="flex cursor-pointer items-start gap-2 rounded-xl border border-gray-200 p-3 text-sm has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
+                        <input type="radio" name="account_type" value="{{ $value }}" @checked(old('account_type', 'student') === $value) class="mt-0.5 text-brand-600 focus:ring-brand-500">
+                        <span>
+                            <span class="flex items-center gap-1 font-semibold text-gray-900"><x-icon :name="$icon" class="h-4 w-4" /> {{ $label }}</span>
+                            <span class="block text-xs text-gray-500">{{ $hint }}</span>
+                        </span>
+                    </label>
+                @endforeach
+            </div>
+            <x-input-error :messages="$errors->get('account_type')" class="mt-2" />
+        </fieldset>
+
         <!-- Password -->
         <div class="mt-4">
             <x-input-label for="password" :value="__('Password')" />

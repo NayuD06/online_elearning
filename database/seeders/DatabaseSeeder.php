@@ -145,6 +145,47 @@ class DatabaseSeeder extends Seeder
 
         $this->seedReviewDemoCourses($teachers->first());
         $this->seedAnnouncements($admin);
+        $this->seedCommunityDemo($students->first());
+    }
+
+    /**
+     * A pending instructor request, a lesson question with its answer and a wishlist, so the new pages are not empty.
+     */
+    private function seedCommunityDemo(User $student): void
+    {
+        $pendingTeacher = User::updateOrCreate(['email' => 'giangvien.moi@example.com'], [
+            'name' => 'Đỗ Thu Hà',
+            'password' => self::TEACHER_PASSWORD,
+            'role' => UserRole::Student,
+            'bio' => 'Kỹ sư phần mềm muốn chia sẻ kinh nghiệm làm dự án thực tế.',
+            'email_verified_at' => now(),
+        ]);
+        $pendingTeacher->forceFill(['instructor_status' => 'pending', 'instructor_requested_at' => now()->subDay()])->save();
+
+        $course = Course::where('slug', Str::slug('Laravel 13 cho người mới bắt đầu'))->first();
+        $lesson = $course?->curriculumLessons()->first();
+
+        if (! $lesson) {
+            return;
+        }
+
+        $student->enrollments()->firstOrCreate(['course_id' => $course->id]);
+
+        $question = $lesson->questions()->firstOrCreate(['user_id' => $student->id], [
+            'body' => 'Em cài Laravel bằng Composer bị báo thiếu extension, thầy cho em hỏi cần bật những extension nào ạ?',
+        ]);
+        $question->answers()->firstOrCreate(['user_id' => $course->instructor_id], [
+            'lesson_id' => $lesson->id,
+            'body' => 'Em bật pdo_mysql, mbstring, openssl, fileinfo và zip trong php.ini rồi chạy lại composer install nhé.',
+        ]);
+
+        $lesson->questions()->firstOrCreate(['user_id' => $student->id, 'body' => 'Bài này có slide để tải về không ạ?']);
+
+        $wishedCourse = Course::where('slug', Str::slug('Nhập môn Machine Learning'))->first();
+
+        if ($wishedCourse) {
+            $student->wishlist()->syncWithoutDetaching([$wishedCourse->id]);
+        }
     }
 
     /**

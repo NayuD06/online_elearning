@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['course_id', 'section_id', 'title', 'content', 'video_url', 'duration_minutes', 'position', 'is_preview'])]
 class Lesson extends Model
@@ -43,6 +44,24 @@ class Lesson extends Model
     public function section(): BelongsTo
     {
         return $this->belongsTo(Section::class);
+    }
+
+    /**
+     * @return HasMany<LessonAttachment, $this>
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(LessonAttachment::class)->oldest('id');
+    }
+
+    /**
+     * Questions asked under the lesson (answers hang off each question).
+     *
+     * @return HasMany<LessonQuestion, $this>
+     */
+    public function questions(): HasMany
+    {
+        return $this->hasMany(LessonQuestion::class)->whereNull('parent_id');
     }
 
     /**

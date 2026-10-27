@@ -34,13 +34,14 @@
                     <span class="badge bg-white/15 text-white">{{ $course->level->label() }}</span>
                 </div>
 
-                <div class="mt-5 flex items-center gap-3">
+                @php($instructorUrl = $course->instructor->isTeacher() ? route('instructors.show', $course->instructor) : null)
+                <a @if ($instructorUrl) href="{{ $instructorUrl }}" @endif class="group mt-5 inline-flex items-center gap-3">
                     <img src="{{ $course->instructor->avatar_url }}" alt="" class="h-10 w-10 rounded-full border-2 border-white/50 object-cover">
-                    <div class="text-sm">
-                        <p class="text-brand-100">Giảng viên</p>
-                        <p class="font-semibold">{{ $course->instructor->name }}</p>
-                    </div>
-                </div>
+                    <span class="text-sm">
+                        <span class="block text-brand-100">Giảng viên</span>
+                        <span @class(['block font-semibold', 'group-hover:underline' => $instructorUrl])>{{ $course->instructor->name }}</span>
+                    </span>
+                </a>
             </div>
         </div>
     </section>
@@ -224,6 +225,14 @@
                                 </a>
                             @endif
                         @endcan
+                        @if ($course->isPublished())
+                            <form method="POST" action="{{ route('wishlist.toggle', $course) }}">
+                                @csrf
+                                <button @class(['btn mt-2 w-full', 'bg-rose-50 text-rose-600 hover:bg-rose-100' => $inWishlist, 'btn-ghost text-gray-600' => ! $inWishlist])>
+                                    <x-icon name="heart" :class="$inWishlist ? 'h-5 w-5 fill-current' : 'h-5 w-5'" /> {{ $inWishlist ? 'Đã yêu thích (bỏ chọn)' : 'Thêm vào yêu thích' }}
+                                </button>
+                            </form>
+                        @endif
                     @else
                         <a href="{{ route('login') }}" class="btn-primary mt-4 w-full py-3">Đăng nhập để ghi danh</a>
                     @endauth

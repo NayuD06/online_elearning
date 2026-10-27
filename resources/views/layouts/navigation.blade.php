@@ -74,6 +74,7 @@
                                 <x-dropdown-link :href="route(Auth::user()->managementRoute())">{{ Auth::user()->isAdmin() ? 'Trang quản trị' : 'Kênh giảng viên' }}</x-dropdown-link>
                             @endif
                             <x-dropdown-link :href="route('dashboard')">Góc học tập</x-dropdown-link>
+                            <x-dropdown-link :href="route('wishlist.index')">Khoá học yêu thích</x-dropdown-link>
                             <x-dropdown-link :href="route('profile.edit')">Hồ sơ cá nhân</x-dropdown-link>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
@@ -121,6 +122,7 @@
                         @if (Auth::user()->managementRoute())
                             <a href="{{ route(Auth::user()->managementRoute()) }}" class="block rounded-lg px-3 py-2 text-sm hover:bg-white/10">{{ Auth::user()->isAdmin() ? 'Trang quản trị' : 'Kênh giảng viên' }}</a>
                         @endif
+                        <a href="{{ route('wishlist.index') }}" class="block rounded-lg px-3 py-2 text-sm hover:bg-white/10">Khoá học yêu thích</a>
                         <a href="{{ route('profile.edit') }}" class="block rounded-lg px-3 py-2 text-sm hover:bg-white/10">Hồ sơ cá nhân</a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

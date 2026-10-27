@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Instructor\LessonRequest;
 use App\Models\Course;
 use App\Models\Lesson;
+use App\Models\LessonAttachment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -34,10 +35,12 @@ class LessonController extends Controller
     {
         Gate::authorize('manage', $course);
 
-        $course->lessons()->create([
-            ...$request->validated(),
+        $lesson = $course->lessons()->create([
+            ...$request->safe()->except('attachments'),
             'position' => $request->integer('position') ?: (int) $course->lessons()->where('section_id', $request->integer('section_id'))->max('position') + 1,
         ]);
+
+        $this->storeAttachments($request, $lesson);
 
         return to_route('instructor.courses.curriculum', $course)->with('success', 'Đã thêm bài học.');
     }
@@ -58,9 +61,11 @@ class LessonController extends Controller
         Gate::authorize('manage', $course);
 
         $lesson->update([
-            ...$request->validated(),
+            ...$request->safe()->except('attachments'),
             'position' => $request->integer('position', $lesson->position),
         ]);
+
+        $this->storeAttachments($request, $lesson);
 
         return to_route('instructor.courses.curriculum', $course)->with('success', 'Đã cập nhật bài học.');
     }
@@ -69,8 +74,26 @@ class LessonController extends Controller
     {
         Gate::authorize('manage', $course);
 
+        LessonAttachment::deleteFiles($lesson->attachments);
         $lesson->delete();
 
         return back()->with('success', 'Đã xoá bài học.');
+    }
+
+    public function destroyAttachment(Course $course, Lesson $lesson, LessonAttachment $attachment): RedirectResponse
+    {
+        Gate::authorize('manage', $course);
+
+        LessonAttachment::deleteFiles([$attachment]);
+        $attachment->delete();
+
+        return back()->with('success', "Đã xoá tài liệu \"{$attachment->name}\".");
+    }
+
+    private function storeAttachments(LessonRequest $request, Lesson $lesson): void
+    {
+        foreach ($request->file('attachments', []) as $file) {
+            LessonAttachment::storeFor($lesson, $file);
+        }
     }
 }

@@ -1,4 +1,10 @@
 <x-admin-layout title="Bảng điều khiển">
+    @if ($stats['pendingInstructors'])
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-5 py-3 text-amber-800">
+            <span class="font-semibold">{{ $stats['pendingInstructors'] }} người dùng đang chờ duyệt làm giảng viên</span>
+            <a href="{{ route('admin.users.index', ['status' => 'instructor_pending']) }}" class="text-sm font-medium underline">Xem và duyệt</a>
+        </div>
+    @endif
     @if ($stats['pending'])
         <div class="card mb-6 overflow-hidden border border-amber-200">
             <div class="flex items-center justify-between bg-amber-50 px-5 py-3">

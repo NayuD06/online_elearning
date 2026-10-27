@@ -22,6 +22,8 @@ class User extends Authenticatable implements MustVerifyEmail
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    public const string LOCKED_MESSAGE = 'Tài khoản của bạn đã bị khoá. Vui lòng liên hệ quản trị viên để được hỗ trợ.';
+
     /**
      * The model's default values for attributes.
      *
@@ -42,6 +44,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'instructor_requested_at' => 'datetime',
+            'locked_at' => 'datetime',
         ];
     }
 
@@ -77,6 +81,22 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasPassword(): bool
     {
         return $this->password !== null;
+    }
+
+    /**
+     * Locked accounts are signed out and cannot sign in again until an admin unlocks them.
+     */
+    public function isLocked(): bool
+    {
+        return $this->locked_at !== null;
+    }
+
+    /**
+     * A student who asked to become an instructor and is waiting for an admin.
+     */
+    public function hasPendingInstructorRequest(): bool
+    {
+        return $this->instructor_status === 'pending';
     }
 
     /**
@@ -127,6 +147,21 @@ class User extends Authenticatable implements MustVerifyEmail
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Courses the user saved for later.
+     *
+     * @return BelongsToMany<Course, $this>
+     */
+    public function wishlist(): BelongsToMany
+    {
+        return $this->belongsToMany(Course::class, 'wishlists')->withTimestamps();
+    }
+
+    public function hasInWishlist(Course $course): bool
+    {
+        return $this->wishlist()->whereKey($course->id)->exists();
     }
 
     /**

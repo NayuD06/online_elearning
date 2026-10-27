@@ -1,7 +1,7 @@
 <x-admin-layout :title="$lesson->exists ? 'Sửa bài học' : 'Thêm bài học'">
     <a href="{{ route('instructor.courses.curriculum', $course) }}" class="mb-4 flex items-center gap-1 text-sm text-gray-500 hover:text-brand-700"><x-icon name="chevron-left" class="h-4 w-4" /> {{ $course->title }}</a>
 
-    <form method="POST" action="{{ $lesson->exists ? route('instructor.courses.lessons.update', [$course, $lesson]) : route('instructor.courses.lessons.store', $course) }}" class="grid gap-6 xl:grid-cols-3">
+    <form method="POST" action="{{ $lesson->exists ? route('instructor.courses.lessons.update', [$course, $lesson]) : route('instructor.courses.lessons.store', $course) }}" enctype="multipart/form-data" class="grid gap-6 xl:grid-cols-3">
         @csrf
         @if ($lesson->exists) @method('PUT') @endif
 
@@ -15,6 +15,30 @@
                 <label for="content" class="form-label">Nội dung bài học</label>
                 <textarea id="content" name="content" data-editor data-upload-url="{{ route('admin.editor.upload') }}" class="form-input">{{ old('content', $lesson->content) }}</textarea>
                 @error('content') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <p class="form-label flex items-center gap-1"><x-icon name="paperclip" class="h-4 w-4" /> Tài liệu đính kèm</p>
+                @if ($lesson->exists && $lesson->attachments->isNotEmpty())
+                    <ul class="mb-3 divide-y divide-gray-100 rounded-lg border border-gray-200">
+                        @foreach ($lesson->attachments as $attachment)
+                            <li class="flex items-center gap-3 px-3 py-2 text-sm">
+                                <x-icon name="document" class="h-5 w-5 shrink-0 text-brand-600" />
+                                <a href="{{ route('attachments.download', [$course, $lesson, $attachment]) }}" class="min-w-0 flex-1 truncate hover:text-brand-700">{{ $attachment->name }}</a>
+                                <span class="shrink-0 text-xs text-gray-500">{{ $attachment->size_label }}</span>
+                                {{-- The delete form lives outside this form: HTML forms cannot be nested --}}
+                                <button form="delete-attachment-{{ $attachment->id }}" class="btn-ghost btn-sm text-rose-600" title="Xoá tài liệu"><x-icon name="trash" class="h-4 w-4" /></button>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+                <input type="file" name="attachments[]" multiple accept="{{ collect(\App\Models\LessonAttachment::EXTENSIONS)->map(fn ($extension) => '.'.$extension)->implode(',') }}"
+                       class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-brand-700 hover:file:bg-brand-100">
+                <p class="mt-1 text-xs text-gray-500">PDF, Word, PowerPoint, Excel, TXT hoặc ZIP; tối đa 10 tệp, mỗi tệp không quá 10 MB. Chỉ học viên đã ghi danh mới tải được.</p>
+                @error('attachments') <p class="form-error">{{ $message }}</p> @enderror
+                @foreach ($errors->get('attachments.*') as $messages)
+                    <p class="form-error">{{ $messages[0] }}</p>
+                @endforeach
             </div>
         </div>
 
@@ -55,4 +79,12 @@
             </div>
         </div>
     </form>
+
+    @if ($lesson->exists)
+        @foreach ($lesson->attachments as $attachment)
+            <form id="delete-attachment-{{ $attachment->id }}" method="POST" action="{{ route('instructor.courses.lessons.attachments.destroy', [$course, $lesson, $attachment]) }}" onsubmit="return confirm('Xoá tài liệu này?')" class="hidden">
+                @csrf @method('DELETE')
+            </form>
+        @endforeach
+    @endif
 </x-admin-layout>

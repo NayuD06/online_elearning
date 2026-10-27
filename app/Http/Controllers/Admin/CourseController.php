@@ -6,6 +6,7 @@ use App\Enums\CourseStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Course;
+use App\Models\LessonAttachment;
 use App\Notifications\CourseApproved;
 use App\Notifications\CourseRejected;
 use Illuminate\Http\RedirectResponse;
@@ -103,6 +104,7 @@ class CourseController extends Controller
     public function destroy(Course $course): RedirectResponse
     {
         Storage::disk('media')->delete(array_filter([$course->thumbnail, ...$course->images->pluck('path')]));
+        LessonAttachment::deleteFiles(LessonAttachment::whereIn('lesson_id', $course->lessons()->select('id'))->get());
         $course->delete();
 
         return back()->with('success', 'Đã xoá khoá học.');

@@ -17,10 +17,10 @@ Tài liệu này tóm tắt phần phân tích và thiết kế để đưa vào
 
 | Vai trò | Quyền chính |
 | --- | --- |
-| Khách | Xem trang chủ, danh sách và chi tiết khoá học, thông báo; đăng ký tài khoản |
-| Học viên (student) | Ghi danh hoặc huỷ ghi danh, học bài, đánh dấu hoàn thành, xem tiến độ, đánh giá khoá học, sửa hồ sơ và ảnh đại diện |
-| Giảng viên (teacher) | Vào trang quản trị; thêm, sửa, xoá khoá học **của mình**, bài học, xem ghi danh và đánh giá của khoá mình dạy |
-| Quản trị viên (admin) | Toàn quyền: khoá học, danh mục, người dùng (gán vai trò), thông báo, ghi danh, đánh giá, thống kê |
+| Khách | Xem trang chủ, danh sách và chi tiết khoá học, hồ sơ giảng viên, thông báo; đăng ký tài khoản (chọn Học viên hoặc Giảng viên) |
+| Học viên (student) | Ghi danh hoặc huỷ ghi danh, học bài, đánh dấu hoàn thành, làm quiz, xem tiến độ, đánh giá khoá học, đặt câu hỏi dưới bài học, tải tài liệu bài học, lưu khoá học yêu thích, sửa hồ sơ, gửi yêu cầu làm giảng viên |
+| Giảng viên (teacher) | Khu `/instructor`: thêm, sửa, xoá khoá học **của mình**, chương, bài học, tài liệu đính kèm, quiz; gửi duyệt; xem học viên; trả lời câu hỏi của học viên |
+| Quản trị viên (admin) | Khu `/admin`: duyệt khoá học, danh mục, người dùng (gán vai trò, duyệt yêu cầu làm giảng viên, khoá/mở khoá tài khoản), thông báo, ghi danh, đánh giá, hỏi đáp, ảnh đã lưu, thống kê |
 
 Phân quyền được thực hiện bằng middleware `role:admin,teacher` cho khu quản trị và `CoursePolicy` (giảng viên chỉ sửa khoá học mình phụ trách).
 
@@ -57,6 +57,12 @@ flowchart LR
     Admin --> UC9(Quản lý người dùng và phân quyền)
     Admin --> UC10(Quản lý danh mục, thông báo)
     Admin --> UC11(Xem thống kê)
+    Student --> UC12(Hỏi đáp dưới bài học)
+    Teacher --> UC12
+    Student --> UC13(Tải tài liệu bài học)
+    Student --> UC14(Lưu khoá học yêu thích)
+    Guest --> UC15(Xem hồ sơ giảng viên)
+    Admin --> UC16(Duyệt giảng viên, khoá tài khoản)
 ```
 
 ## 5. Sơ đồ quan hệ thực thể (ERD)
@@ -74,6 +80,11 @@ erDiagram
     COURSES ||--o{ ENROLLMENTS : "có"
     COURSES ||--o{ REVIEWS : "nhận"
     LESSONS ||--o{ LESSON_COMPLETIONS : "được hoàn thành"
+    LESSONS ||--o{ LESSON_QUESTIONS : "có hỏi đáp"
+    LESSONS ||--o{ LESSON_ATTACHMENTS : "đính kèm"
+    USERS ||--o{ LESSON_QUESTIONS : "hỏi / trả lời"
+    USERS ||--o{ WISHLISTS : "yêu thích"
+    COURSES ||--o{ WISHLISTS : "được yêu thích"
 
     USERS {
         bigint id PK
@@ -81,6 +92,9 @@ erDiagram
         string email UK
         string password
         string role "admin | teacher | student"
+        string instructor_status "null | pending | rejected"
+        timestamp instructor_requested_at
+        timestamp locked_at "khác null = bị khoá"
         string avatar
         string phone
         text bio
@@ -140,6 +154,26 @@ erDiagram
         text comment
         bool is_visible
     }
+    LESSON_QUESTIONS {
+        bigint id PK
+        bigint lesson_id FK
+        bigint user_id FK
+        bigint parent_id FK "null = câu hỏi, khác null = câu trả lời"
+        text body
+    }
+    LESSON_ATTACHMENTS {
+        bigint id PK
+        bigint lesson_id FK
+        string name "tên file gốc"
+        string path "đường dẫn trên disk attachments"
+        bigint size
+        string mime_type
+    }
+    WISHLISTS {
+        bigint id PK
+        bigint user_id FK
+        bigint course_id FK
+    }
     ANNOUNCEMENTS {
         bigint id PK
         bigint user_id FK
@@ -155,7 +189,8 @@ erDiagram
 **Ràng buộc đáng chú ý**
 
 - `enrollments (user_id, course_id)` và `reviews (user_id, course_id)` là UNIQUE: mỗi học viên ghi danh và đánh giá một khoá đúng một lần.
-- `lesson_completions (user_id, lesson_id)` là UNIQUE.
+- `lesson_completions (user_id, lesson_id)` và `wishlists (user_id, course_id)` là UNIQUE.
+- Xoá câu hỏi xoá luôn các câu trả lời của nó (`lesson_questions.parent_id` cascade).
 - Xoá khoá học sẽ xoá dây chuyền bài học, ảnh, ghi danh, đánh giá. Xoá danh mục chỉ đặt `category_id` của khoá học về NULL.
 
 ## 6. Bảo mật
@@ -163,6 +198,12 @@ erDiagram
 - Mật khẩu băm bằng bcrypt; mọi form có CSRF token.
 - Nội dung rich text được lọc (`HtmlSanitizer`) trước khi hiển thị: loại bỏ `<script>`, thuộc tính `on*`, `javascript:` và iframe lạ để chống XSS.
 - Upload ảnh được kiểm tra định dạng và giới hạn 2MB mỗi ảnh, tối đa 10 ảnh mỗi lần.
+- Tài liệu bài học chỉ nhận PDF, Word, PowerPoint, Excel, TXT, ZIP (tối đa 10 MB/tệp), lưu ở nơi không
+  công khai (thư mục `storage/app/private` hoặc Cloudinary loại private). Chỉ người được học khoá
+  (học viên đã ghi danh, giảng viên phụ trách, admin) tải được, qua route kiểm tra quyền.
+- Tài khoản bị khoá không đăng nhập được bằng mật khẩu lẫn Google, và bị đăng xuất ngay ở lần tải
+  trang kế tiếp (middleware `EnsureAccountIsNotLocked`).
+- Đăng ký chọn "Giảng viên" chỉ tạo yêu cầu chờ duyệt; vai trò chỉ đổi khi admin duyệt.
 
 ## 7. Cài đặt và chạy
 

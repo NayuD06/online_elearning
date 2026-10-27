@@ -4,13 +4,18 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Instructor;
+use App\Http\Controllers\InstructorProfileController;
 use App\Http\Controllers\LearningController;
+use App\Http\Controllers\LessonAttachmentController;
+use App\Http\Controllers\LessonQuestionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizAttemptController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -18,6 +23,7 @@ Route::get('/khoa-hoc', [CourseController::class, 'index'])->name('courses.index
 Route::get('/khoa-hoc/{course}', [CourseController::class, 'show'])->name('courses.show');
 Route::get('/thong-bao', [AnnouncementController::class, 'index'])->name('announcements.index');
 Route::get('/thong-bao/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
+Route::get('/giang-vien/{instructor}', [InstructorProfileController::class, 'show'])->name('instructors.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
@@ -28,6 +34,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/hoc/{course}/{lesson?}', [LearningController::class, 'show'])->name('learn.show');
     Route::post('/hoc/{course}/{lesson}/hoan-thanh', [LearningController::class, 'complete'])->name('learn.complete');
+    Route::get('/hoc/{course}/{lesson}/tai-lieu/{attachment}', [LessonAttachmentController::class, 'download'])->scopeBindings()->name('attachments.download');
+
+    Route::post('/hoc/{course}/{lesson}/hoi-dap', [LessonQuestionController::class, 'store'])->name('lesson-questions.store');
+    Route::post('/hoi-dap/{question}/tra-loi', [LessonQuestionController::class, 'answer'])->name('lesson-questions.answer');
+    Route::delete('/hoi-dap/{question}', [LessonQuestionController::class, 'destroy'])->name('lesson-questions.destroy');
+
+    Route::get('/khoa-hoc-yeu-thich', [WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/khoa-hoc/{course}/yeu-thich', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 
     Route::scopeBindings()->group(function () {
         Route::get('/kiem-tra/{course}/{quiz}', [QuizAttemptController::class, 'show'])->name('quizzes.show');
@@ -40,6 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/profile/yeu-cau-giang-vien', [ProfileController::class, 'requestInstructor'])->name('profile.instructor-request');
 });
 
 // CKEditor image upload, shared by the admin and instructor forms.
@@ -63,9 +78,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
     Route::resource('categories', Admin\CategoryController::class)->except('show');
     Route::resource('users', Admin\UserController::class)->except('show');
+    Route::patch('users/{user}/instructor/approve', [Admin\UserController::class, 'approveInstructor'])->name('users.instructor.approve');
+    Route::patch('users/{user}/instructor/reject', [Admin\UserController::class, 'rejectInstructor'])->name('users.instructor.reject');
+    Route::patch('users/{user}/lock', [Admin\UserController::class, 'toggleLock'])->name('users.lock');
     Route::resource('announcements', Admin\AnnouncementController::class)->except('show');
 
     Route::get('media', [Admin\MediaController::class, 'index'])->name('media.index');
+    Route::get('hoi-dap', DiscussionController::class)->name('discussions.index');
 });
 
 Route::prefix('instructor')->name('instructor.')->middleware(['auth', 'role:teacher'])->group(function () {
@@ -74,6 +93,9 @@ Route::prefix('instructor')->name('instructor.')->middleware(['auth', 'role:teac
     Route::resource('courses', Instructor\CourseController::class)->except('show');
     Route::post('courses/{course}/submit', [Instructor\CourseController::class, 'submit'])->name('courses.submit');
     Route::get('courses/{course}/students', Instructor\StudentController::class)->name('courses.students');
+    Route::get('hoi-dap', DiscussionController::class)->name('discussions.index');
+    Route::delete('courses/{course}/lessons/{lesson}/attachments/{attachment}', [Instructor\LessonController::class, 'destroyAttachment'])
+        ->scopeBindings()->name('courses.lessons.attachments.destroy');
 
     Route::get('courses/{course}/curriculum', [Instructor\SectionController::class, 'index'])->name('courses.curriculum');
     Route::resource('courses.sections', Instructor\SectionController::class)->only(['store', 'update', 'destroy'])->scoped(['course' => 'slug', 'section' => 'id']);

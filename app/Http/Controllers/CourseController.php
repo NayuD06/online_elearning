@@ -49,6 +49,7 @@ class CourseController extends Controller
             'course' => $course,
             'reviews' => $course->reviews()->with('user')->where('is_visible', true)->latest()->paginate(5),
             'isEnrolled' => $user?->isEnrolledIn($course) ?? false,
+            'inWishlist' => $user?->hasInWishlist($course) ?? false,
             'userReview' => $user ? $course->reviews()->where('user_id', $user->id)->first() : null,
             'relatedCourses' => Course::published()
                 ->where('category_id', $course->category_id)

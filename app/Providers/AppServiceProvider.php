@@ -32,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // "cloudinary" disk driver, used by the "media" disk when CLOUDINARY_URL is set.
         Storage::extend('cloudinary', function (Application $app, array $config) {
-            $adapter = new CloudinaryAdapter(new Cloudinary($config['url']), $config['folder'] ?? '');
+            $adapter = new CloudinaryAdapter(new Cloudinary($config['url']), $config['folder'] ?? '', $config['type'] ?? 'upload');
 
             return new FilesystemAdapter(new Filesystem($adapter, $config), $adapter, $config);
         });

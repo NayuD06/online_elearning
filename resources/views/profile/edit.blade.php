@@ -6,6 +6,14 @@
             @include('profile.partials.update-profile-information-form')
         </div>
 
+        @if ($user->role === \App\Enums\UserRole::Student)
+            <div class="card p-6 sm:p-8">
+                <div class="max-w-xl">
+                    @include('profile.partials.instructor-request-form')
+                </div>
+            </div>
+        @endif
+
         <div class="card p-6 sm:p-8">
             <div class="max-w-xl">
                 @include('profile.partials.update-password-form')

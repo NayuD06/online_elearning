@@ -62,6 +62,12 @@
                         <a href="{{ route('learn.show', [$course, $nextLesson]) }}" class="btn-secondary">Bài tiếp <x-icon name="chevron-right" class="h-4 w-4" /></a>
                     @endif
                 </div>
+
+                @if ($attachments->isNotEmpty())
+                    @include('learn.partials.attachments')
+                @endif
+
+                @include('learn.partials.questions')
             </div>
 
             {{-- On mobile the outline opens right under its toggle button instead of below the lesson --}}

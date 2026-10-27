@@ -21,6 +21,12 @@
             </div>
         </div>
 
+        @if (Auth::user()->hasPendingInstructorRequest())
+            <p class="mt-6 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                <x-icon name="clock" class="h-5 w-5 shrink-0" /> Yêu cầu làm giảng viên của bạn đang chờ quản trị viên duyệt. Trong lúc chờ, bạn vẫn học được như học viên.
+            </p>
+        @endif
+
         {{-- Stat tiles --}}
         <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
             @foreach ([

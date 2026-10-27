@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,6 +46,22 @@ class ProfileController extends Controller
         $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    /**
+     * Let a student (e.g. one who signed up with Google) ask an admin to become an instructor.
+     */
+    public function requestInstructor(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->role !== UserRole::Student || $user->hasPendingInstructorRequest()) {
+            return back()->with('error', 'Tài khoản của bạn không thể gửi yêu cầu làm giảng viên lúc này.');
+        }
+
+        $user->forceFill(['instructor_status' => 'pending', 'instructor_requested_at' => now()])->save();
+
+        return back()->with('success', 'Đã gửi yêu cầu làm giảng viên. Quản trị viên sẽ xem xét và phản hồi qua email.');
     }
 
     /**

@@ -42,6 +42,9 @@ class LearningController extends Controller
             'previousLesson' => $lessons->get($currentIndex - 1),
             'nextLesson' => $lessons->get($currentIndex + 1),
             'progress' => (int) round($completedLessonIds->count() / $lessons->count() * 100),
+            'attachments' => $lesson->attachments()->get(),
+            'questions' => $lesson->questions()->with(['user', 'answers.user'])->latest()->paginate(10)->fragment('hoi-dap'),
+            'canAnswer' => $request->user()->can('manage', $course),
         ]);
     }
 

@@ -5,6 +5,7 @@ namespace App\Filesystem;
 use Cloudinary\Api\ApiResponse;
 use Cloudinary\Api\Exception\NotFound;
 use Cloudinary\Cloudinary;
+use DateTimeInterface;
 use GuzzleHttp\Psr7\Utils;
 use League\Flysystem\Config;
 use League\Flysystem\DirectoryAttributes;
@@ -28,6 +29,9 @@ use Throwable;
  * A path such as "avatars/abc.jpg" becomes the public ID "<folder>/avatars/abc". Images and
  * videos are stored without their extension (Cloudinary adds it back in the URL); any other
  * file is stored as a "raw" asset whose public ID keeps the extension.
+ *
+ * With the "private" delivery type the files have no public URL: they are only reachable
+ * through short-lived signed download links (see getTemporaryUrl()).
  */
 class CloudinaryAdapter implements FilesystemAdapter
 {
@@ -37,7 +41,7 @@ class CloudinaryAdapter implements FilesystemAdapter
 
     private PathPrefixer $prefixer;
 
-    public function __construct(private Cloudinary $cloudinary, string $folder = '')
+    public function __construct(private Cloudinary $cloudinary, string $folder = '', private string $type = 'upload')
     {
         $this->prefixer = new PathPrefixer($folder);
     }
@@ -47,6 +51,10 @@ class CloudinaryAdapter implements FilesystemAdapter
      */
     public function getUrl(string $path): string
     {
+        if ($this->type !== 'upload') {
+            return $this->getTemporaryUrl($path, now()->addHour());
+        }
+
         $type = $this->resourceType($path);
         $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
@@ -58,6 +66,28 @@ class CloudinaryAdapter implements FilesystemAdapter
         }
 
         return $url.$this->publicId($path).($type === 'raw' ? '' : '.'.$extension);
+    }
+
+    /**
+     * Signed link that downloads the file until the given time, also for private files.
+     *
+     * @param  array<string, mixed>  $options
+     */
+    public function getTemporaryUrl(string $path, DateTimeInterface $expiration, array $options = []): string
+    {
+        $resourceType = $this->resourceType($path);
+
+        return $this->cloudinary->uploadApi()->privateDownloadUrl(
+            $this->publicId($path),
+            // Raw files keep their extension in the public ID.
+            $resourceType === 'raw' ? '' : strtolower(pathinfo($path, PATHINFO_EXTENSION)),
+            [
+                'resource_type' => $resourceType,
+                'type' => $this->type,
+                'expires_at' => $expiration->getTimestamp(),
+                'attachment' => $options['attachment'] ?? false,
+            ],
+        );
     }
 
     public function fileExists(string $path): bool
@@ -76,7 +106,7 @@ class CloudinaryAdapter implements FilesystemAdapter
         foreach (['image', 'video', 'raw'] as $type) {
             $assets = $this->cloudinary->adminApi()->assets([
                 'resource_type' => $type,
-                'type' => 'upload',
+                'type' => $this->type,
                 'prefix' => $this->prefixer->prefixDirectoryPath($path),
                 'max_results' => 1,
             ]);
@@ -126,6 +156,7 @@ class CloudinaryAdapter implements FilesystemAdapter
         try {
             $this->cloudinary->uploadApi()->destroy($this->publicId($path), [
                 'resource_type' => $this->resourceType($path),
+                'type' => $this->type,
                 'invalidate' => true,
             ]);
         } catch (Throwable $e) {
@@ -139,7 +170,7 @@ class CloudinaryAdapter implements FilesystemAdapter
             foreach (['image', 'video', 'raw'] as $type) {
                 $this->cloudinary->adminApi()->deleteAssetsByPrefix(
                     $this->prefixer->prefixDirectoryPath($path),
-                    ['resource_type' => $type],
+                    ['resource_type' => $type, 'type' => $this->type],
                 );
             }
         } catch (Throwable $e) {
@@ -193,7 +224,7 @@ class CloudinaryAdapter implements FilesystemAdapter
             do {
                 $page = $this->cloudinary->adminApi()->assets(array_filter([
                     'resource_type' => $type,
-                    'type' => 'upload',
+                    'type' => $this->type,
                     'prefix' => $prefix,
                     'max_results' => 500,
                     'next_cursor' => $cursor,
@@ -226,6 +257,7 @@ class CloudinaryAdapter implements FilesystemAdapter
         try {
             $this->cloudinary->uploadApi()->rename($this->publicId($source), $this->publicId($destination), [
                 'resource_type' => $this->resourceType($source),
+                'type' => $this->type,
                 'overwrite' => true,
                 'invalidate' => true,
             ]);
@@ -263,6 +295,7 @@ class CloudinaryAdapter implements FilesystemAdapter
         return [
             'public_id' => $publicId,
             'resource_type' => $this->resourceType($path),
+            'type' => $this->type,
             'asset_folder' => dirname($publicId) === '.' ? '' : dirname($publicId),
             'filename' => basename($path),
             'overwrite' => true,
@@ -285,7 +318,7 @@ class CloudinaryAdapter implements FilesystemAdapter
     {
         return $this->cloudinary->adminApi()->asset($this->publicId($path), [
             'resource_type' => $this->resourceType($path),
-            'type' => 'upload',
+            'type' => $this->type,
         ]);
     }
 
@@ -294,6 +327,10 @@ class CloudinaryAdapter implements FilesystemAdapter
      */
     private function originalUrl(string $path): string
     {
+        if ($this->type !== 'upload') {
+            return $this->getTemporaryUrl($path, now()->addMinutes(5));
+        }
+
         return str_replace('/upload/f_auto,q_auto/', '/upload/', $this->getUrl($path));
     }
 

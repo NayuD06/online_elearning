@@ -85,13 +85,33 @@ Trang riêng của học viên sau khi đăng nhập:
 - Cột "Nội dung khoá học" liệt kê các bài, đánh dấu bài đã hoàn thành.
 - Nút đánh dấu hoàn thành bài và chuyển sang bài tiếp theo.
 
+Dưới bài học có thêm:
+
+- **Tài liệu bài học**: file PDF, slide... do giảng viên đính kèm, chỉ học viên đã ghi danh tải được.
+- **Hỏi đáp về bài học**: học viên đặt câu hỏi, giảng viên phụ trách hoặc admin trả lời; học viên
+  nhận email khi có câu trả lời.
+
+### 3.6b Khoá học yêu thích (`/khoa-hoc-yeu-thich`) và hồ sơ giảng viên (`/giang-vien/{id}`)
+
+- Nút **Thêm vào yêu thích** ở chi tiết khoá học; danh sách nằm ở menu tài khoản.
+- Bấm tên giảng viên ở chi tiết khoá học để xem hồ sơ: giới thiệu, số khoá, số học viên, điểm đánh
+  giá và các khoá học đã xuất bản.
+
 ### 3.7 Thông báo (`/thong-bao`)
 
 Danh sách và trang chi tiết các thông báo do quản trị viên đăng.
 
 ### 3.8 Hồ sơ (`/profile`)
 
-Sửa họ tên, email, số điện thoại, giới thiệu, ảnh đại diện; đổi mật khẩu; xoá tài khoản.
+Sửa họ tên, email, số điện thoại, giới thiệu, ảnh đại diện; đổi mật khẩu; xoá tài khoản. Học
+viên có thêm nút **Gửi yêu cầu làm giảng viên** (ví dụ tài khoản tạo bằng Google).
+
+Khi đăng ký, người dùng chọn **Học viên** hoặc **Giảng viên**. Chọn Giảng viên thì tài khoản vẫn là
+học viên cho tới khi quản trị viên duyệt.
+
+### 3.9 Trang lỗi
+
+Trang 403, 404, 419, 429, 500, 503 có giao diện riêng bằng tiếng Việt, kèm nút về trang chủ.
 
 ## 4. Trang quản trị (`/admin`)
 
@@ -125,13 +145,17 @@ trước khi hiển thị để chống XSS.
 
 ![Quản lý người dùng](screenshots/10-admin-nguoi-dung.png)
 
-Thêm, sửa, xoá người dùng và gán vai trò admin, teacher, student. Có tìm kiếm và lọc theo vai trò.
+Thêm, sửa, xoá người dùng và gán vai trò admin, teacher, student. Có tìm kiếm, lọc theo vai trò
+và trạng thái (chờ duyệt giảng viên, đang bị khoá). Duyệt / từ chối yêu cầu làm giảng viên (có
+email báo kết quả), khoá và mở khoá tài khoản.
 
 ### 4.5 Các mục khác
 
 - **Danh mục** (chỉ admin): thêm, sửa, xoá danh mục khoá học.
 - **Ghi danh**: xem và xoá lượt ghi danh.
 - **Đánh giá**: duyệt, ẩn hoặc xoá đánh giá.
+- **Hỏi đáp**: câu hỏi của học viên ở mọi khoá (giảng viên có mục Hỏi đáp riêng, chỉ khoá của mình),
+  lọc câu chưa trả lời, trả lời ngay trong danh sách.
 - **Thông báo** (chỉ admin): đăng, sửa, xoá thông báo, có ảnh và trạng thái xuất bản.
 
 ## 5. Giao diện điện thoại

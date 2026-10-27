@@ -8,6 +8,7 @@
         ],
         'Giảng dạy' => [
             ['label' => 'Khoá học của tôi', 'route' => 'instructor.courses.index', 'active' => 'instructor.courses.*', 'icon' => 'book'],
+            ['label' => 'Hỏi đáp', 'route' => 'instructor.discussions.index', 'active' => 'instructor.discussions.*', 'icon' => 'question'],
         ],
     ] : [
         'Tổng quan' => [
@@ -18,6 +19,7 @@
             ['label' => 'Danh mục', 'route' => 'admin.categories.index', 'active' => 'admin.categories.*', 'icon' => 'tag'],
             ['label' => 'Ghi danh', 'route' => 'admin.enrollments.index', 'active' => 'admin.enrollments.*', 'icon' => 'clipboard'],
             ['label' => 'Đánh giá', 'route' => 'admin.reviews.index', 'active' => 'admin.reviews.*', 'icon' => 'chat'],
+            ['label' => 'Hỏi đáp', 'route' => 'admin.discussions.index', 'active' => 'admin.discussions.*', 'icon' => 'question'],
         ],
         'Hệ thống' => [
             ['label' => 'Người dùng', 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'icon' => 'users'],
