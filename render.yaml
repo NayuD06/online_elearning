@@ -1,0 +1,69 @@
+# Render Blueprint: tạo web service từ Dockerfile, deploy nhánh feature/demo
+services:
+  - type: web
+    name: online-elearning
+    runtime: docker
+    plan: free
+    branch: feature/demo
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /up
+    envVars:
+      - key: APP_NAME
+        value: UTH E-Learning
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: APP_LOCALE
+        value: vi
+      - key: APP_FALLBACK_LOCALE
+        value: en
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_SSL_CA
+        sync: false
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: FILESYSTEM_DISK
+        value: public
+      - key: LOG_CHANNEL
+        value: stderr
+      # Ảnh upload lưu trên Cloudinary, email gửi qua Resend: xem docs/luu-anh-va-gui-email.md
+      - key: CLOUDINARY_URL
+        sync: false
+      - key: MAIL_MAILER
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: UTH E-Learning
+      - key: AUTH_VERIFY_EMAIL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        value: https://online-elearning.onrender.com/auth/google/callback

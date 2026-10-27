@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    [x-cloak] {
+        display: none !important;
+    }
+}
+
+@layer components {
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60;
+    }
+
+    .btn-primary {
+        @apply btn bg-brand-700 text-white hover:bg-brand-800 focus:ring-brand-500;
+    }
+
+    .btn-secondary {
+        @apply btn border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-brand-500;
+    }
+
+    .btn-danger {
+        @apply btn bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-500;
+    }
+
+    .btn-ghost {
+        @apply btn text-gray-600 hover:bg-gray-100 focus:ring-gray-300;
+    }
+
+    .btn-sm {
+        @apply px-3 py-1.5 text-xs;
+    }
+
+    .card {
+        @apply rounded-xl border border-gray-100 bg-white shadow-card;
+    }
+
+    .form-label {
+        @apply mb-1 block text-sm font-medium text-gray-700;
+    }
+
+    .form-input {
+        @apply block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500;
+    }
+
+    .form-error {
+        @apply mt-1 text-sm text-rose-600;
+    }
+
+    .badge {
+        @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium;
+    }
+
+    .table-wrapper {
+        @apply overflow-x-auto;
+    }
+
+    .data-table {
+        @apply min-w-full divide-y divide-gray-100 text-sm;
+    }
+
+    /* No text-left here: it would out-rank the text-center / text-right utilities set on individual headers. */
+    .data-table thead th {
+        @apply whitespace-nowrap bg-gray-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500;
+    }
+
+    .data-table tbody td {
+        @apply px-4 py-3 align-middle text-gray-700;
+    }
+
+    .data-table tbody tr {
+        @apply hover:bg-brand-50/40;
+    }
+
+    /* Rendered rich-editor content */
+    .rich-content {
+        @apply leading-relaxed text-gray-700;
+    }
+
+    .rich-content h2 {
+        @apply mb-3 mt-6 text-xl font-bold text-gray-900;
+    }
+
+    .rich-content h3 {
+        @apply mb-2 mt-5 text-lg font-semibold text-gray-900;
+    }
+
+    .rich-content h4 {
+        @apply mb-2 mt-4 font-semibold text-gray-900;
+    }
+
+    .rich-content p {
+        @apply mb-3;
+    }
+
+    .rich-content ul {
+        @apply mb-3 list-disc space-y-1 pl-6;
+    }
+
+    .rich-content ol {
+        @apply mb-3 list-decimal space-y-1 pl-6;
+    }
+
+    .rich-content a {
+        @apply font-medium text-brand-700 underline;
+    }
+
+    .rich-content blockquote {
+        @apply my-4 border-l-4 border-brand-500 bg-brand-50 px-4 py-2 italic text-gray-700;
+    }
+
+    .rich-content img {
+        @apply my-4 h-auto max-w-full rounded-lg;
+    }
+
+    .rich-content figure.image {
+        @apply my-4;
+    }
+
+    .rich-content figure.image figcaption {
+        @apply mt-1 text-center text-sm text-gray-500;
+    }
+
+    .rich-content table {
+        @apply my-4 w-full border-collapse text-sm;
+    }
+
+    .rich-content table td,
+    .rich-content table th {
+        @apply border border-gray-200 px-3 py-2;
+    }
+
+    .rich-content figure.media {
+        @apply my-4;
+    }
+
+    .rich-content figure.media iframe,
+    .rich-content iframe {
+        @apply aspect-video h-auto w-full rounded-lg;
+    }
+}
+
+/* CKEditor sizing inside admin forms */
+.ck-editor__editable_inline {
+    min-height: 260px;
+}
+
+.ck.ck-editor__main > .ck-editor__editable {
+    @apply rich-content;
+}
