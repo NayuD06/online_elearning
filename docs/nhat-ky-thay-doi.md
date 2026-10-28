@@ -3,6 +3,13 @@
 Tài liệu này ghi lại các thay đổi Claude thực hiện trên nhánh `feature/demo`, theo thứ tự thời
 gian. Nhánh `main` không bị động đến.
 
+## 28/10/2026: CI/CD bằng GitHub Actions
+
+- `.github/workflows/ci.yml`: mỗi push/PR vào `main` chạy toàn bộ PHPUnit và build + chạy thử image
+  Docker với MySQL 8 (giống Render + Aiven). Lỗi hiện tên test/dòng lỗi hoặc log container ở trang
+  Summary của lần chạy. Hướng dẫn: mục 6 của [deploy-render.md](deploy-render.md).
+- `render.yaml`: nhánh `main`, `autoDeployTrigger: checksPass` (chỉ deploy khi CI xanh).
+
 ## 27/10/2026: chứng chỉ PDF, chuông thông báo, thanh toán VNPay/MoMo, SEO
 
 Hướng dẫn cấu hình và cách hoạt động: [thanh-toan.md](thanh-toan.md). Ca kiểm thử: mục 10–13 của

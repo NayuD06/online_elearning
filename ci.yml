@@ -1,0 +1,169 @@
+# CI/CD: mỗi lần push hoặc mở PR vào main, GitHub tự kiểm tra 2 việc trước khi Render deploy.
+#   1. Kiểm thử: chạy toàn bộ PHPUnit, test nào hỏng sẽ hiện tên + dòng lỗi ở tab "Checks"/"Summary".
+#   2. Docker: build đúng Dockerfile Render dùng, rồi chạy thử container với MySQL 8
+#      (migrate + seed + gọi /up và trang chủ), lỗi nào thì in log container ra Summary.
+# Bật Auto-Deploy "After CI Checks Pass" trên Render để web chỉ deploy khi cả 2 bước xanh.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  tests:
+    name: 1. Kiểm thử (PHPUnit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cài PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, pdo_mysql, gd, zip, intl, bcmath, exif
+          coverage: none
+
+      - name: Cài Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Lấy thư mục cache Composer
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Tạo .env
+        run: cp .env.example .env
+
+      - name: Cài thư viện PHP (composer install)
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Tạo APP_KEY
+        run: php artisan key:generate
+
+      # Các trang dùng @vite nên phải có public/build/manifest.json thì test mới chạy được
+      - name: Build giao diện (npm run build)
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+
+      - name: Chạy test
+        run: php artisan test --log-junit=junit.xml
+
+      - name: Báo cáo test hỏng
+        if: ${{ !cancelled() && hashFiles('junit.xml') != '' }}
+        uses: mikepenz/action-junit-report@v5
+        with:
+          report_paths: junit.xml
+          check_name: Kết quả PHPUnit
+          detailed_summary: true
+          include_passed: false
+
+  docker:
+    name: 2. Build Docker + chạy thử như Render
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: online_elearning
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image từ Dockerfile
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: online-elearning:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Aiven bắt mọi bảng phải có khoá chính: bật giống vậy để bắt lỗi migration trước khi lên web thật
+      - name: Cấu hình MySQL giống Aiven
+        run: docker exec ${{ job.services.mysql.id }} mysql -uroot -proot -e "SET GLOBAL sql_require_primary_key = ON;"
+
+      - name: Chạy container (migrate, seed, Apache)
+        run: |
+          docker run -d --name app --network host \
+            -e PORT=8080 \
+            -e APP_KEY="base64:$(openssl rand -base64 32)" \
+            -e APP_ENV=production -e APP_DEBUG=false -e APP_URL=http://127.0.0.1:8080 \
+            -e APP_LOCALE=vi -e APP_FALLBACK_LOCALE=en \
+            -e DB_CONNECTION=mysql -e DB_HOST=127.0.0.1 -e DB_PORT=3306 \
+            -e DB_DATABASE=online_elearning -e DB_USERNAME=root -e DB_PASSWORD=root \
+            -e SESSION_DRIVER=database -e CACHE_STORE=database -e QUEUE_CONNECTION=database \
+            -e FILESYSTEM_DISK=public -e LOG_CHANNEL=stderr -e MAIL_MAILER=log \
+            online-elearning:ci
+
+      - name: Chờ /up trả về 200 (như health check của Render)
+        run: |
+          for i in $(seq 1 60); do
+            if [ "$(docker inspect -f '{{.State.Running}}' app)" != "true" ]; then
+              echo "::error title=Container dừng giữa chừng::docker/start.sh bị lỗi (migrate, seed hoặc optimize). Xem log container ở bước sau."
+              exit 1
+            fi
+            if curl -fsS -o /dev/null http://127.0.0.1:8080/up; then
+              echo "/up OK sau khoảng $((i * 3)) giây"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "::error title=Hết giờ chờ /up::Sau 3 phút web vẫn chưa trả lời /up. Xem log container ở bước sau."
+          exit 1
+
+      - name: Kiểm tra các trang chính
+        run: |
+          fail=0
+          for path in / /khoa-hoc /login /sitemap.xml; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:8080$path")
+            echo "$path -> $code"
+            if [ "$code" != "200" ]; then
+              echo "::error title=Trang lỗi $code::$path trả về $code thay vì 200"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Log container khi có lỗi
+        if: failure()
+        run: |
+          docker logs app > container.log 2>&1 || echo "(không có container để lấy log)" > container.log
+          tail -n 200 container.log
+          {
+            echo "## Build/chạy Docker bị lỗi"
+            echo "200 dòng log cuối của container (giống log bạn thấy trên Render):"
+            echo '```'
+            tail -n 200 container.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

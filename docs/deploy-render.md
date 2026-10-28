@@ -121,6 +121,21 @@ Lưu ý: khi đã đặt biến, mật khẩu đổi trên web cho các tài kho
 Seed chỉ tự chạy khi database trống. Muốn xoá sạch và seed lại: thêm biến
 `RESEED_DATABASE=true`, deploy một lần, rồi **xoá biến này** (nếu không mỗi lần deploy sẽ xoá dữ liệu).
 
+## 6. CI/CD: biết lỗi ở đâu trước khi deploy
+
+File `.github/workflows/ci.yml` chạy mỗi lần push hoặc mở PR vào `main`. Xem ở tab **Actions** trên
+GitHub (dấu ✓ xanh / ✗ đỏ cạnh commit):
+
+1. **Kiểm thử (PHPUnit)**: chạy toàn bộ test. Test hỏng hiện tên test, file và dòng lỗi trong
+   mục *Kết quả PHPUnit* và trang **Summary** của lần chạy.
+2. **Build Docker + chạy thử như Render**: build đúng `Dockerfile`, chạy container với MySQL 8 (bật
+   `sql_require_primary_key` giống Aiven), chờ `/up` trả 200 rồi mở `/`, `/khoa-hoc`, `/login`,
+   `/sitemap.xml`. Lỗi thì 200 dòng log cuối của container được in ra trang **Summary**.
+
+Để Render chỉ deploy khi cả hai bước xanh: Render → service → **Settings** → **Build & Deploy** →
+**Auto-Deploy** → chọn **After CI Checks Pass** (trong `render.yaml` là `autoDeployTrigger: checksPass`).
+Commit làm CI đỏ sẽ không được deploy, web vẫn chạy bản cũ.
+
 ## Lưu ý với gói Free
 
 - Service tự ngủ sau ~15 phút không có ai truy cập; lần mở đầu tiên sau đó mất khoảng 1 phút.
@@ -129,7 +144,7 @@ Seed chỉ tự chạy khi database trống. Muốn xoá sạch và seed lại: 
   mỗi lần deploy hoặc khởi động lại. Đặt `CLOUDINARY_URL` để lưu ảnh trên Cloudinary. Dữ liệu trong
   MySQL (Aiven) thì vẫn giữ nguyên.
 - Cổng SMTP bị chặn: không gửi mail qua Gmail SMTP được, dùng Brevo (`MAIL_MAILER=brevo`).
-- Mỗi lần `git push origin feature/demo`, Render tự build và deploy lại.
+- Mỗi lần `git push origin main`, Render tự build và deploy lại (nếu bật mục 6 thì chỉ deploy khi CI xanh).
 
 ## Sửa lỗi thường gặp
 
