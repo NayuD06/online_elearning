@@ -8,6 +8,7 @@ use App\Models\Lesson;
 use App\Models\Quiz;
 use App\Models\Section;
 use App\Notifications\CertificateIssued;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -53,37 +54,71 @@ class LearningController extends Controller
 
     /**
      * Toggle the "finished" mark of a lesson for the current learner.
+     *
+     * The learning page sends this with fetch and gets JSON back so it can update in place;
+     * a plain form post (no JavaScript) still gets the usual redirect.
      */
-    public function complete(Request $request, Course $course, Lesson $lesson): RedirectResponse
+    public function complete(Request $request, Course $course, Lesson $lesson): JsonResponse|RedirectResponse
     {
         Gate::authorize('learn', $course);
         abort_unless($lesson->course_id === $course->id, 404);
 
         $user = $request->user();
         $user->completedLessons()->toggle($lesson->id);
+        $isCompleted = $user->completedLessons()->whereKey($lesson->id)->exists();
 
-        $isCourseFinished = $user->progressIn($course) === 100;
+        $progress = $user->progressIn($course);
+        $isCourseFinished = $progress === 100;
         $user->enrollments()->where('course_id', $course->id)->update(['completed_at' => $isCourseFinished ? now() : null]);
 
         // A certificate stays valid even if a lesson is unmarked later.
+        $newCertificate = null;
+
         if ($isCourseFinished && $user->isEnrolledIn($course)) {
             $certificate = Certificate::issueFor($user, $course);
 
             if ($certificate->wasRecentlyCreated) {
                 $user->notify(new CertificateIssued($certificate));
-
-                return to_route('certificates.show', $certificate)->with('success', 'Chúc mừng! Bạn đã hoàn thành khoá học và nhận được chứng chỉ.');
+                $newCertificate = $certificate;
             }
         }
 
         $lessons = $course->curriculumLessons()->get();
-        $nextLesson = $lessons->get($lessons->search(fn (Lesson $item) => $item->id === $lesson->id) + 1);
+        $nextLesson = $isCompleted ? $lessons->get($lessons->search(fn (Lesson $item) => $item->id === $lesson->id) + 1) : null;
 
-        if ($user->completedLessons()->whereKey($lesson->id)->exists() && $nextLesson) {
-            return to_route('learn.show', [$course, $nextLesson])->with('success', 'Đã hoàn thành bài học. Tiếp tục bài kế tiếp nhé!');
+        $message = match (true) {
+            $newCertificate !== null => 'Chúc mừng! Bạn đã hoàn thành khoá học và nhận được chứng chỉ.',
+            $isCourseFinished => 'Chúc mừng! Bạn đã hoàn thành khoá học.',
+            $nextLesson !== null => 'Đã hoàn thành bài học. Tiếp tục bài kế tiếp nhé!',
+            $isCompleted => 'Đã hoàn thành bài học.',
+            default => 'Đã bỏ đánh dấu hoàn thành.',
+        };
+
+        if ($request->wantsJson()) {
+            // The page leaves for the certificate, which shows this message as usual.
+            if ($newCertificate) {
+                $request->session()->flash('success', $message);
+            }
+
+            return response()->json([
+                'completed' => $isCompleted,
+                'progress' => $progress,
+                'course_finished' => $isCourseFinished,
+                'message' => $message,
+                'next_url' => $nextLesson ? route('learn.show', [$course, $nextLesson]) : null,
+                'certificate_url' => $newCertificate ? route('certificates.show', $newCertificate) : null,
+            ]);
         }
 
-        return back()->with('success', $isCourseFinished ? 'Chúc mừng! Bạn đã hoàn thành khoá học.' : 'Đã cập nhật tiến độ.');
+        if ($newCertificate) {
+            return to_route('certificates.show', $newCertificate)->with('success', $message);
+        }
+
+        if ($nextLesson) {
+            return to_route('learn.show', [$course, $nextLesson])->with('success', $message);
+        }
+
+        return back()->with('success', $message);
     }
 
     /**

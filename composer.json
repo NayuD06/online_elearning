@@ -15,8 +15,7 @@
         "laravel/socialite": "^5.31",
         "laravel/tinker": "^3.0",
         "maatwebsite/excel": "^4.0",
-        "symfony/brevo-mailer": "^7.4",
-        "symfony/http-client": "^7.4"
+        "resend/resend-php": "^1.1"
     },
     "require-dev": {
         "laravel/boost": "^2.10",

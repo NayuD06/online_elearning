@@ -149,10 +149,10 @@ Cần cấu hình theo [dang-nhap-google.md](dang-nhap-google.md). Ở máy ph�
 | --- | --- | --- | --- |
 | HV-01 | Chưa đăng nhập, ở chi tiết khoá học | Khoá miễn phí: nút "Đăng nhập để ghi danh"; khoá trả phí: "Đăng nhập để mua khoá học" | |
 | HV-02 | Học viên bấm **Ghi danh khoá học** ở một khoá **miễn phí** | Chuyển vào trang học bài đầu tiên; khoá xuất hiện ở Góc học tập | |
-| HV-03 | Bấm **Đánh dấu hoàn thành** | Chuyển sang bài kế tiếp, % tiến độ tăng, bài cũ có dấu ✓ ở cột phải | |
-| HV-04 | Bấm lại "Đã hoàn thành (bỏ đánh dấu)" ở bài đã xong | Bỏ đánh dấu, % giảm | |
+| HV-03 | Bấm **Đánh dấu hoàn thành** | Trang **không tải lại** (không nháy trắng): hiện thông báo nhỏ ở dưới, % tiến độ tăng, bài cũ có dấu ✓ ở cột phải, rồi chuyển sang bài kế tiếp (địa chỉ trên thanh URL đổi theo) | |
+| HV-04 | Bấm lại "Đã hoàn thành (bỏ đánh dấu)" ở bài đã xong | Không tải lại trang, vẫn ở bài đó: bỏ dấu ✓, % giảm, nút trở lại "Đánh dấu hoàn thành" | |
 | HV-05 | Hoàn thành mọi bài | Chuyển sang trang chứng chỉ, báo "Chúc mừng! … nhận được chứng chỉ"; Góc học tập ghi 100%, nút đổi thành Ôn tập (xem thêm mục 10) | |
-| HV-06 | Nút Bài trước / Bài tiếp và danh sách bài bên phải | Điều hướng đúng thứ tự chương → bài | |
+| HV-06 | Nút Bài trước / Bài tiếp và danh sách bài bên phải | Điều hướng đúng thứ tự chương → bài mà không tải lại trang; cột danh sách giữ nguyên vị trí cuộn; nút Back/Forward của trình duyệt quay đúng bài | |
 | HV-07 | Bài có link YouTube | Video nhúng phát được | |
 | HV-08 | **Huỷ ghi danh** ở chi tiết khoá học, xác nhận | Khoá biến mất khỏi Góc học tập; bài không học thử bị khoá lại | |
 | HV-09 | Người chưa ghi danh mở bài **Học thử** | Xem được nội dung, nút "Ghi danh để học tiếp" | |
@@ -339,8 +339,8 @@ Trên Render đã đặt sẵn trong Dockerfile.
 | --- | --- | --- | --- |
 | RD-01 | Trên Render (có `CLOUDINARY_URL`), đổi ảnh đại diện | Link ảnh bắt đầu bằng `https://res.cloudinary.com/` | |
 | RD-02 | Render deploy lại (Manual Deploy) rồi mở lại trang | Ảnh và tài liệu đính kèm vẫn còn | |
-| RD-03 | Có `BREVO_API_KEY`, `MAIL_MAILER=brevo`: gửi quên mật khẩu tới một Gmail | Email đến hộp thư (xem cả mục Spam) | |
-| RD-04 | Chưa đặt `BREVO_API_KEY` | Các chức năng gửi mail báo chưa gửi được, không lỗi 500 | |
+| RD-03 | Có `RESEND_API_KEY`, `MAIL_MAILER=resend`: gửi quên mật khẩu tới email đã đăng ký Resend (hoặc email bất kỳ nếu đã xác minh tên miền) | Email đến hộp thư (xem cả mục Spam) | |
+| RD-04 | Chưa đặt `RESEND_API_KEY` | Các chức năng gửi mail báo chưa gửi được, không lỗi 500 | |
 | RD-05 | Sau khi deploy bản mới | Render chạy `migrate` tự động; dữ liệu cũ (người dùng, khoá học) vẫn còn | |
 
 ## 9. Bảo mật

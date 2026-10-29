@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class LearningTest extends TestCase
@@ -31,6 +33,74 @@ class LearningTest extends TestCase
         $this->post(route('learn.complete', [$course, $second]));
         $this->assertSame(100, $student->progressIn($course));
         $this->assertNotNull($student->enrollments()->first()->completed_at);
+    }
+
+    public function test_marking_a_lesson_from_the_page_script_returns_json(): void
+    {
+        $student = User::factory()->create();
+        $course = Course::factory()->create();
+        [$first, $second] = Lesson::factory()->count(2)->sequence(['position' => 1], ['position' => 2])->create(['course_id' => $course->id]);
+        $student->enrollments()->create(['course_id' => $course->id]);
+
+        $this->actingAs($student)->get(route('learn.show', [$course, $first]))
+            ->assertOk()
+            ->assertSee('data-learn-complete="'.$first->id.'"', false)
+            ->assertSee('data-learn-link', false);
+
+        $this->postJson(route('learn.complete', [$course, $first]))->assertOk()->assertExactJson([
+            'completed' => true,
+            'progress' => 50,
+            'course_finished' => false,
+            'message' => 'Đã hoàn thành bài học. Tiếp tục bài kế tiếp nhé!',
+            'next_url' => route('learn.show', [$course, $second]),
+            'certificate_url' => null,
+        ]);
+
+        // Pressing again unmarks the lesson and stays on it.
+        $this->postJson(route('learn.complete', [$course, $first]))->assertOk()->assertJson([
+            'completed' => false,
+            'progress' => 0,
+            'message' => 'Đã bỏ đánh dấu hoàn thành.',
+            'next_url' => null,
+        ]);
+        $this->assertSame(0, $student->progressIn($course));
+    }
+
+    public function test_finishing_the_course_from_the_page_script_points_to_the_certificate(): void
+    {
+        Notification::fake();
+        $student = User::factory()->create();
+        $course = Course::factory()->create();
+        [$first, $last] = Lesson::factory()->count(2)->sequence(['position' => 1], ['position' => 2])->create(['course_id' => $course->id]);
+        $student->enrollments()->create(['course_id' => $course->id]);
+
+        $this->actingAs($student)->postJson(route('learn.complete', [$course, $first]));
+        $response = $this->postJson(route('learn.complete', [$course, $last]));
+
+        $response->assertOk()->assertJson([
+            'completed' => true,
+            'progress' => 100,
+            'course_finished' => true,
+            'next_url' => null,
+            'certificate_url' => route('certificates.show', Certificate::sole()),
+        ]);
+        $response->assertSessionHas('success', 'Chúc mừng! Bạn đã hoàn thành khoá học và nhận được chứng chỉ.');
+
+        // Unmarking and finishing again keeps the old certificate, so there is nothing new to open.
+        $this->postJson(route('learn.complete', [$course, $last]))->assertJson(['completed' => false, 'progress' => 50]);
+        $this->postJson(route('learn.complete', [$course, $last]))->assertJson([
+            'course_finished' => true,
+            'message' => 'Chúc mừng! Bạn đã hoàn thành khoá học.',
+            'certificate_url' => null,
+        ]);
+    }
+
+    public function test_marking_a_lesson_without_enrollment_is_refused_as_json(): void
+    {
+        $course = Course::factory()->create();
+        $lesson = Lesson::factory()->create(['course_id' => $course->id, 'is_preview' => true]);
+
+        $this->actingAs(User::factory()->create())->postJson(route('learn.complete', [$course, $lesson]))->assertForbidden()->assertJsonStructure(['message']);
     }
 
     public function test_preview_lessons_are_open_to_everyone_signed_in(): void

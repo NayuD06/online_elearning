@@ -77,8 +77,8 @@ LOG_CHANNEL=stderr
 MAIL_MAILER=log
 ```
 
-Để ảnh upload không bị mất và gửi được email thật, thêm `CLOUDINARY_URL`, đổi `MAIL_MAILER=brevo`
-và thêm `BREVO_API_KEY`, `MAIL_FROM_ADDRESS`, `AUTH_VERIFY_EMAIL`: xem
+Để ảnh upload không bị mất và gửi được email thật, thêm `CLOUDINARY_URL`, đổi `MAIL_MAILER=resend`
+và thêm `RESEND_API_KEY`, `MAIL_FROM_ADDRESS`, `AUTH_VERIFY_EMAIL`: xem
 [luu-anh-va-gui-email.md](luu-anh-va-gui-email.md).
 
 Sau đó **Add Environment Variable** thêm riêng biến `DB_SSL_CA`, giá trị là toàn bộ nội dung
@@ -143,7 +143,7 @@ Commit làm CI đỏ sẽ không được deploy, web vẫn chạy bản cũ.
 - Ổ đĩa không được giữ: nếu chưa đặt `CLOUDINARY_URL`, ảnh upload (ảnh khoá học, avatar) sẽ mất sau
   mỗi lần deploy hoặc khởi động lại. Đặt `CLOUDINARY_URL` để lưu ảnh trên Cloudinary. Dữ liệu trong
   MySQL (Aiven) thì vẫn giữ nguyên.
-- Cổng SMTP bị chặn: không gửi mail qua Gmail SMTP được, dùng Brevo (`MAIL_MAILER=brevo`).
+- Cổng SMTP bị chặn: không gửi mail qua Gmail SMTP được, dùng Resend (`MAIL_MAILER=resend`).
 - Mỗi lần `git push origin main`, Render tự build và deploy lại (nếu bật mục 6 thì chỉ deploy khi CI xanh).
 
 ## Sửa lỗi thường gặp

@@ -9,14 +9,11 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use League\Flysystem\Filesystem;
-use Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoTransportFactory;
-use Symfony\Component\Mailer\Transport\Dsn;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,11 +37,6 @@ class AppServiceProvider extends ServiceProvider
             return new FilesystemAdapter(new Filesystem($adapter, $config), $adapter, $config);
         });
 
-        // Brevo sends mail over HTTPS, which still works on hosts that block SMTP ports (Render Free).
-        Mail::extend('brevo', fn () => (new BrevoTransportFactory)->create(
-            new Dsn('brevo+api', 'default', config('services.brevo.key'))
-        ));
-
         $this->configureRateLimiting();
 
         // Every password: at least 6 characters, one uppercase letter and one special character.
@@ -58,7 +50,7 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Limits against bots: mass sign-ups, password reset emails (Brevo free sends 300 a day) and spam.
+     * Limits against bots: mass sign-ups, password reset emails (Resend free sends 100 a day) and spam.
      */
     private function configureRateLimiting(): void
     {

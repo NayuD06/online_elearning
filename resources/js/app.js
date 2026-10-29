@@ -25,3 +25,7 @@ if (document.querySelector('[data-editor]')) {
 if (document.querySelector('[data-chart]')) {
     import('./charts').then(({ initCharts }) => initCharts());
 }
+
+if (document.querySelector('[data-learn]')) {
+    import('./learn').then(({ initLearning }) => initLearning());
+}

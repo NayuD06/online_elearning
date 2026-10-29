@@ -3,6 +3,24 @@
 Tài liệu này ghi lại các thay đổi Claude thực hiện trên nhánh `feature/demo`, theo thứ tự thời
 gian. Nhánh `main` không bị động đến.
 
+## 29/10/2026: học bài không tải lại trang
+
+- Trang học bài (`resources/js/learn.js`): bấm **Đánh dấu hoàn thành** / bỏ đánh dấu, **Bài trước**,
+  **Bài tiếp** hay chọn bài ở cột phải đều chạy bằng fetch, chỉ thay phần nội dung bài học; thanh %
+  tiến độ, dấu ✓ và nút cập nhật ngay, có thông báo nhỏ ở dưới, URL đổi theo bài (Back/Forward dùng
+  được). Hoàn thành bài cuối vẫn mở trang chứng chỉ.
+- `LearningController@complete` trả JSON khi được gọi bằng fetch; tắt JavaScript hoặc lỗi mạng thì
+  form/link chạy như cũ (tải lại trang). Ca kiểm thử: HV-03, HV-04, HV-06.
+
+## 29/10/2026: gửi email trên Render bằng Resend (thay Brevo)
+
+- Trên Render quay lại dùng Resend (`MAIL_MAILER=resend`, `RESEND_API_KEY`) thay cho Brevo. Ở máy
+  vẫn dùng Gmail SMTP như cũ.
+- Bỏ gói `symfony/brevo-mailer`, `symfony/http-client`, thêm `resend/resend-php`. Cập nhật
+  `symfony/mime` lên 7.4.22 (vá lỗi bảo mật CVE-2026-45070).
+- Lưu ý: chưa có tên miền riêng thì Resend chỉ gửi được tới email đã đăng ký tài khoản Resend.
+  Hướng dẫn: mục 3 và 4 của [luu-anh-va-gui-email.md](luu-anh-va-gui-email.md).
+
 ## 28/10/2026: CI/CD bằng GitHub Actions
 
 - `.github/workflows/ci.yml`: mỗi push/PR vào `main` chạy toàn bộ PHPUnit và build + chạy thử image
